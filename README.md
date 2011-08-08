@@ -25,3 +25,7 @@ Hooks is a simple Scala library for handling plugins. It aims to be straightforw
         def onClick(button: Button){
           buttonClicked(button)
         }
+
+## Read more
+[Overview](wiki/Overview)
+[Examples](wiki/Examples)
