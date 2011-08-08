@@ -8,9 +8,7 @@ Hooks is a simple Scala library for handling plugins. It aims to be straightforw
 2. Create a plugin that attaches a callback to that hook:
 
         object ButtonLogger extends Feature {
-          def logButtonClicked(button: Button)(implicit c: PluginContext) =
-            println("Somebody clicked "+button.name)
-          buttonClicked.register(logButtonClicked)
+          buttonClicked.register(button => println("Somebody clicked "+button.name))
         }
 
 3. Register your plugin, and make a context with the currently desired plugins:
