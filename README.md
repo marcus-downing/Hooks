@@ -5,7 +5,7 @@ Hooks is a simple Scala library for handling plugins. It aims to be straightforw
 
         val buttonClicked = new ActionHook[Button]("Button Clicked")
 
-2. Create a plugin that attached something to that hook:
+2. Create a plugin that attaches a callback to that hook:
 
         object MyFeature extends Feature {
           def logButtonClicked(button: Button)(implicit c: PluginContext) =
@@ -27,5 +27,6 @@ Hooks is a simple Scala library for handling plugins. It aims to be straightforw
         }
 
 ## Read more
-[Overview](wiki/Overview)
-[Examples](wiki/Examples)
+- [Overview](Hooks/wiki/Overview)
+
+- [Examples](Hooks/wiki/Examples)
