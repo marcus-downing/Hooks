@@ -9,10 +9,10 @@ import scala.Product
  * attached to them.
  */
 
-class Hook[S](val name: String, val id = PluginContext.uniqueId) {
+class Hook[S](val name: String, val id: Int = PluginContext.uniqueId) {
 	def get(implicit c: PluginContext) = c.get(this)
-	def unregister(id: Int)(implicit c: PluginContext) = c.unregister(this, id)
-	def unregisterAll(implicit c: PluginContext) = c.unregisterAll(this)
+	def unregister(id: Int)(implicit c: PluginContext) { c.unregister(this, id) }
+	def unregisterAll(implicit c: PluginContext) { c.unregisterAll(this) }
 }
 
 //  A hook that stores objects of a given type
@@ -45,7 +45,7 @@ class FilterHook[V, S <: Product](name: String) extends Hook[V => S => V](name) 
 }
 
 /*
-//  A hook the converts between two types
+//  A hook that converts between two types
 class LensHook[O, I](name: String) extends Hook[O => I](name) {
 	class LensHookCounterpart extends Hook[I => O](name) {
 		def encode = LensHook.this.decode

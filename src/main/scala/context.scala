@@ -82,7 +82,7 @@ class PluginRepository {
 }
 
 object PluginRepository extends PluginRepository {
-	private var _nextid = 1
+	private var _nextId = 1
 	def uniqueId = { val id = _nextId; _nextId = _nextId + 1; id }
 }
 
