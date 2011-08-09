@@ -9,39 +9,43 @@ import scala.Product
  * attached to them.
  */
 
-class Hook[S](val name: String, val id: Int = PluginContext.uniqueId) {
+class Hook[S](val name: String, val id: Int = PluginRepository.uniqueId) {
+	def unregister(id: Int)(implicit c: PluginContextBuilder) { c.unregister(this, id) }
+	def unregisterAll(implicit c: PluginContextBuilder) { c.unregisterAll(this) }
 	def get(implicit c: PluginContext) = c.get(this)
-	def unregister(id: Int)(implicit c: PluginContext) { c.unregister(this, id) }
-	def unregisterAll(implicit c: PluginContext) { c.unregisterAll(this) }
 }
 
 //  A hook that stores objects of a given type
 class ComponentHook[T](name: String) extends Hook[T](name) {
-	def register(t: T)(implicit c: PluginContext) = c.register(this, t)
+	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
+
 	def apply()(implicit c: PluginContext) = get
 }
 
 //  A hook that selects just one object
 class SelectableHook[T](name: String) extends Hook[T](name) {
-	def register(t: T)(implicit c: PluginContext) = c.register(this, t)
+	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
+
 	def selectValue(values: List[T])(implicit c: PluginContext): Option[T]
 	def select(implicit c: PluginContext) = selectValue(get)
 	def apply()(implicit c: PluginContext) = select
 }
 
 //  A hook that fires an action
-class ActionHook[S <: Product](name: String) extends Hook[S => Unit](name) {
-	def register(f: S => Unit)(implicit c: PluginContext) = c.register(this, f)
+class ActionHook[S](name: String) extends Hook[S => PluginContext => Unit](name) {
+	def register(f: S => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
+
 	def actions = get
-	def apply(s: S)(implicit c: PluginContext) { for (action <- actions) action(s) }
+	def apply(s: S)(implicit c: PluginContext) { for (action <- actions) action(s)(c) }
 }
 
 //  A hook that transforms a value
-class FilterHook[V, S <: Product](name: String) extends Hook[V => S => V](name) {
-	def register(f: V => S => V)(implicit c: PluginContext) = c.register(this, f)
+class FilterHook[V, S](name: String) extends Hook[V => S => PluginContext => V](name) {
+	def register(f: V => S => PluginContext => V)(implicit c: PluginContextBuilder) = c.register(this, f)
+
 	def filters = get
 	def apply(value: V)(s: S)(implicit c: PluginContext): V =
-		filters.foldLeft(value)((value: V, filter: V => S => V) => filter(value)(s))
+		filters.foldLeft(value)((value: V, filter: V => S => PluginContext => V) => filter(value)(s)(c))
 }
 
 /*
@@ -54,15 +58,15 @@ class LensHook[O, I](name: String) extends Hook[O => I](name) {
 	}
 	val counterpart = new LensHookCounterpart
 
-	def registerEncoder(enc: O => I)(implicit c: PluginContext) = c.register(this, enc)
-	def registerDecoder(dec: I => O)(implicit c: PluginContext) = c.register(counterpart, dec)
+	def registerEncoder(enc: O => I)(implicit c: PluginContextBuilder) = c.register(this, enc)
+	def registerDecoder(dec: I => O)(implicit c: PluginContextBuilder) = c.register(counterpart, dec)
 
-	def encode(o: O): Option[I] = {
+	def encode(o: O)(implicit c: PluginContext): Option[I] = {
 		val encoders = get
 		...
 	}
 	
-	def decode(i: I): Option[O] = {
+	def decode(i: I)(implicit c: PluginContext): Option[O] = {
 		val decoders = counterpart.get
 		...
 	}

@@ -77,7 +77,10 @@ class PluginRepository {
 	def makeContext(desiredFeatures: List[Feature], permit: Feature => Boolean = true) = {
 		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures).filter(f => permit(f))
 		val plugins = sortPlugins(tracePlugins(features, permit))
-		new PluginContext(features, plugins)
+		val builder = new PluginContextBuilder
+		for (plugin <- plugins)
+			plugin.init(builder)
+		new PluginContextImpl(features, plugins, registry)
 	}
 }
 
@@ -86,20 +89,16 @@ object PluginRepository extends PluginRepository {
 	def uniqueId = { val id = _nextId; _nextId = _nextId + 1; id }
 }
 
-object PluginContext {
-	def makeContext(desiredFeatures: List[Feature], permit: Feature => Boolean = true) =
-		PluginRepository.makeContext(desiredFeatures, permit)
+trait PluginContext {
+	def hasFeature(feature: Feature):Boolean
+	def hasPlugin(plugin: Plugin): Boolean
+	def hasRegistered[S](hook: Hook[S]): Boolean
+	def get[S](hook: Hook[S]): List[S]
 }
 
-class PluginContext (features: List[Feature], plugins: List[Plugin]) {
+class PluginContextBuilder (features: List[Feature], plugins: List[Plugin]) extends PluginContext {
 	def hasFeature(feature: Feature) = features.contains(feature)
 	def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
-	
-	private var _locked = false
-	for (plugin <- plugins)
-		plugin.init
-	_locked = true
-	def locked = _locked
 
 	private val registry: HashMap[Hook[_], List[(Int, Any)]]
 	def register[S](hook: Hook[S], value: S) = {
@@ -118,6 +117,14 @@ class PluginContext (features: List[Feature], plugins: List[Plugin]) {
 		if (locked) throw new Exception("Cannot register hooks on a locked context")
 		registry(hook) = List()
 	}
+	def hasRegistered[S](hook: Hook[S]) = !registry(hook).getOrElse(List()).empty
+	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_._2.asInstanceOf[S])
+}
+
+case class PluginContextImpl (features: List[Feature], plugins: List[Plugin], registry: Map[Hook[_], List[(Int, Any)]]) extends PluginContext {
+	def hasFeature(feature: Feature) = features.contains(feature)
+	def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
+
 	def hasRegistered[S](hook: Hook[S]) = !registry(hook).getOrElse(List()).empty
 	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_._2.asInstanceOf[S])
 }

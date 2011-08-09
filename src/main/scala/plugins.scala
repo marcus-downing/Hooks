@@ -16,7 +16,7 @@ trait Plugin {
 	def before: List[Plugin] = List()
 	def after: List[Plugin] = List()
 
-	def init(implicit context: PluginContext)
+	def init(implicit builder: PluginContextBuilder)
 }
 
 trait Feature extends Plugin
