@@ -80,6 +80,7 @@ class PluginRepository {
 		val builder = new PluginContextBuilder
 		for (plugin <- plugins)
 			plugin.init(builder)
+	  val registry = builder.registry.mapValues(_ => _._2)
 		new PluginContextImpl(features, plugins, registry)
 	}
 }
@@ -100,7 +101,7 @@ class PluginContextBuilder (features: List[Feature], plugins: List[Plugin]) exte
 	def hasFeature(feature: Feature) = features.contains(feature)
 	def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
 
-	private val registry: HashMap[Hook[_], List[(Int, Any)]]
+	private val registry: HashMap[Hook[_], List[(Int, _)]]
 	def register[S](hook: Hook[S], value: S) = {
 		if (locked) throw new Exception("Cannot register hooks on a locked context")
 		val id = PluginRepository.uniqueId
@@ -121,10 +122,10 @@ class PluginContextBuilder (features: List[Feature], plugins: List[Plugin]) exte
 	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_._2.asInstanceOf[S])
 }
 
-case class PluginContextImpl (features: List[Feature], plugins: List[Plugin], registry: Map[Hook[_], List[(Int, Any)]]) extends PluginContext {
+case class PluginContextImpl (features: List[Feature], plugins: List[Plugin], registry: Map[Hook[_], List[_]]) extends PluginContext {
 	def hasFeature(feature: Feature) = features.contains(feature)
 	def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
 
 	def hasRegistered[S](hook: Hook[S]) = !registry(hook).getOrElse(List()).empty
-	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_._2.asInstanceOf[S])
+	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_.asInstanceOf[S])
 }
