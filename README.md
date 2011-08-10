@@ -16,10 +16,10 @@ Hooks is a simple Scala library for handling plugins. It aims to be straightforw
 3. Register your plugin with the repository
 
         PluginRepository.registerFeatures(ButtonLogger)
-        val optionalFeatures = PluginRepository.optionalFeatures
 
 4. Make a context with the currently desired plugins
 
+        val optionalFeatures = PluginRepository.optionalFeatures
         // ...choose active features...
         implicit val context = PluginRepository.makeContext(chosenFeatures)
 
