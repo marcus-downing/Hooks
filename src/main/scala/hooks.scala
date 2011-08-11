@@ -10,8 +10,6 @@ import scala.Product
  */
 
 class Hook[S](val name: String, val id: Int = PluginRepository.uniqueId) {
-	def unregister(id: Int)(implicit c: PluginContextBuilder) { c.unregister(this, id) }
-	def unregisterAll(implicit c: PluginContextBuilder) { c.unregisterAll(this) }
 	def get(implicit c: PluginContext) = c.get(this)
 }
 
@@ -23,7 +21,7 @@ class ComponentHook[T](name: String) extends Hook[T](name) {
 }
 
 //  A hook that selects just one object
-class SelectableHook[T](name: String) extends Hook[T](name) {
+abstract class SelectableHook[T](name: String) extends Hook[T](name) {
 	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
 
 	def selectValue(values: List[T])(implicit c: PluginContext): Option[T]
@@ -34,20 +32,20 @@ class SelectableHook[T](name: String) extends Hook[T](name) {
 //  A hook that fires an action
 class ActionHook[S](name: String) extends Hook[S => PluginContext => Unit](name) {
 	def register(f: S => PluginContext => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: S => Unit)(implicit c: PluginContextBuilder) = c.register(this, act(f))
-	def act(f: S => Unit)(s: S)(implicit c: PluginContext) { f(s) }
+	//def register(f: S => Unit)(implicit c: PluginContextBuilder) = c.register(this, act(f)_)
+	//def act(f: S => Unit)(s: S)(implicit c: PluginContext) { f(s) }
 
-	def actions = get
+	def actions(implicit c: PluginContext) = get
 	def apply(s: S)(implicit c: PluginContext) { for (action <- actions) action(s)(c) }
 }
 
 //  A hook that transforms a value
 class FilterHook[V, S](name: String) extends Hook[V => S => PluginContext => V](name) {
 	def register(f: V => S => PluginContext => V)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: V => V)(implicit c: PluginContextBuilder) = c.register(this, act(f))
-	def act(f: V => Unit)(v: V)(s: S)(implicit c: PluginContext) = f(v)
+	//def register(f: V => V)(implicit c: PluginContextBuilder) = c.register(this, act(f)_)
+	//def act(f: V => Unit)(v: V)(s: S)(implicit c: PluginContext) = f(v)
 
-	def filters = get
+	def filters(implicit c: PluginContext) = get
 	def apply(value: V)(s: S)(implicit c: PluginContext): V =
 		filters.foldLeft(value)((value: V, filter: V => S => PluginContext => V) => filter(value)(s)(c))
 }

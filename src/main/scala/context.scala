@@ -1,6 +1,6 @@
 package hooks
 
-import scala.collection.mutable._
+import scala.collection.mutable.{HashMap, ListBuffer}
 
 /**
  * Plugin Repository and Context
@@ -14,7 +14,7 @@ import scala.collection.mutable._
 
 class PluginRepository {
 	val registeredFeatures = ListBuffer[Feature]()
-	val requiredFeatures = SetBuffer[Feature]()
+	val requiredFeatures = ListBuffer[Feature]()
 	def optionalFeatures = registeredFeatures.diff(requiredFeatures).toList
 	def register(features: Feature*) { registeredFeatures.appendAll(features) }
 	def require(features: Feature*) { requiredFeatures.appendAll(features) }
@@ -23,16 +23,16 @@ class PluginRepository {
 	def isRequired(feature: Feature) = requiredFeatures.contains(feature)
 	
 	//  find all plugin dependencies
-	def tracePlugins(head: List[Plugin], permit: Feature => Boolean) = {
+	def tracePlugins(head: List[Plugin], permit: Plugin => Boolean) = {
 		def trace(past: List[Plugin], present: List[Plugin]): List[Plugin] = {
-			if (present.empty) past
+			if (present.isEmpty) past
 			else {
 				val future = for {
 					plugin <- present
 					p <- plugin.require
 				} yield p
 				val future2 = for {
-					p <- future.unique
+					p <- future.distinct
 					if !past.contains(p) && !present.contains(p)
 					if permit(p)
 				} yield p
@@ -54,7 +54,7 @@ class PluginRepository {
 			val nowfree = (newlyfree ::: free.tail).distinct
 			nowfree match {
 				case Nil => 
-					if (!edges.empty) {
+					if (!edges.isEmpty) {
 						val errors = edges.map(e => e._1.name+" and "+e._2.name)
 						throw new Exception("Cyclical graph: unsatisfied dependencies between "+errors.mkString(", "))
 					}
@@ -63,9 +63,9 @@ class PluginRepository {
 			}
 		}
 	
-		val edges = {
-			val edges1 = for { p <- plugins; b = plugin.before } yield (b, p)
-			val edges2 = for { p <- plugins; a = plugin.after } yield (p, a)
+		val edges: List[(Plugin, Plugin)] = {
+			val edges1: List[(Plugin, Plugin)] = for { p <- plugins; b <- p.before } yield (b, p)
+			val edges2: List[(Plugin, Plugin)] = for { p <- plugins; a <- p.after } yield (p, a)
 			(edges1 ::: edges2).distinct
 		}
 		val freeNodes = for { n <- plugins; if !edges.exists(edge => edge._2 == n) } yield n
@@ -74,13 +74,16 @@ class PluginRepository {
 	}
 
 	//  create a context
-	def makeContext(desiredFeatures: List[Feature], permit: Feature => Boolean = true) = {
-		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures).filter(f => permit(f))
+	def makeContext(desiredFeatures: List[Feature], permit: Plugin => Boolean = p => true) = {
+		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures.toList).filter(f => permit(f))
 		val plugins = sortPlugins(tracePlugins(features, permit))
-		val builder = new PluginContextBuilder
+		
+		//  initialise all the plugins in order
+		val builder = new PluginContextBuilder(features, plugins)
 		for (plugin <- plugins)
 			plugin.init(builder)
-	  val registry = builder.registry.mapValues(_ => _._2)
+		val registry: Map[Hook[_], List[_]] = builder.registry.toMap
+
 		new PluginContextImpl(features, plugins, registry)
 	}
 }
@@ -101,31 +104,20 @@ class PluginContextBuilder (features: List[Feature], plugins: List[Plugin]) exte
 	def hasFeature(feature: Feature) = features.contains(feature)
 	def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
 
-	private val registry: HashMap[Hook[_], List[(Int, _)]]
-	def register[S](hook: Hook[S], value: S) = {
-		if (locked) throw new Exception("Cannot register hooks on a locked context")
-		val id = PluginRepository.uniqueId
-		val list = registry(hook).getOrElse(List())
-		registry(hook) = (id, value) :: list
-		id
+	val registry = HashMap[Hook[_], List[_]]()
+	def getValues[S](hook: Hook[S]) = registry.get(hook).getOrElse(List()).asInstanceOf[List[S]]
+	
+	def register[S](hook: Hook[S], value: S) {
+		registry(hook) = value :: getValues(hook)
 	}
-	def unregister[S](hook: Hook[S], id: Int) {
-		if (locked) throw new Exception("Cannot register hooks on a locked context")
-		val list = registry(hook).getOrElse(List())
-		registry(hook) = list.filter(_._1 != id)
-	}
-	def unregisterAll[S](hook: Hook[S]) {
-		if (locked) throw new Exception("Cannot register hooks on a locked context")
-		registry(hook) = List()
-	}
-	def hasRegistered[S](hook: Hook[S]) = !registry(hook).getOrElse(List()).empty
-	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_._2.asInstanceOf[S])
+	def hasRegistered[S](hook: Hook[S]) = !getValues(hook).isEmpty
+	def get[S](hook: Hook[S]) = getValues(hook)
 }
 
 case class PluginContextImpl (features: List[Feature], plugins: List[Plugin], registry: Map[Hook[_], List[_]]) extends PluginContext {
 	def hasFeature(feature: Feature) = features.contains(feature)
 	def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
 
-	def hasRegistered[S](hook: Hook[S]) = !registry(hook).getOrElse(List()).empty
-	def get[S](hook: Hook[S]) = registry(hook).getOrElse(List()).map(_.asInstanceOf[S])
+	def hasRegistered[S](hook: Hook[S]) = !registry.get(hook).getOrElse(List()).isEmpty
+	def get[S](hook: Hook[S]) = registry.get(hook).getOrElse(List()).map(_.asInstanceOf[S])
 }
