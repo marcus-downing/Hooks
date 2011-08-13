@@ -20,3 +20,12 @@ trait Plugin {
 }
 
 trait Feature extends Plugin
+
+class PluginDependencyException(edges: List[(Plugin, Plugin)]) extends Exception(PluginDependencyException.message(edges))
+
+object PluginDependencyException {
+	def message(edges: List[(Plugin, Plugin)]) = {
+		val errors = edges.map(e => e._1.name+" and "+e._2.name)
+		"Unsatisfiable dependencies between "+errors.mkString(", ")
+	}
+}
