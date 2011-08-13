@@ -21,7 +21,7 @@ class HookSpec extends Spec {
 				repo.require(FilterTestFeature)
 				implicit val context = repo.makeContext(Nil)
 				
-				val result = FilterTestFeature.hook("foo")
+				val result = FilterTestFeature.hook("foo")()
 				println(result)
 				assert(result == "foobar")
 			}
@@ -30,7 +30,7 @@ class HookSpec extends Spec {
 				repo.require(FilterTestFeature2)
 				implicit val context = repo.makeContext(Nil)
 				
-				val result = FilterTestFeature2.hook("foo")
+				val result = FilterTestFeature2.hook("foo")()
 				println(result)
 				assert(result == "foobarqux")
 			}
@@ -63,7 +63,7 @@ object ComponentTestFeature extends Feature {
 }
 
 object FilterTestFeature extends Feature {
-	val hook = new FilterHook[String]("Test filters")
+	val hook = new FilterHook[String, Unit]("Test filters")
 	val name = "Filter Test"
 	def require = Nil
 	
@@ -71,20 +71,20 @@ object FilterTestFeature extends Feature {
 		hook.register(transform _)
 	}
 	
-	def transform(value: String)(c: PluginContext) = value+"bar"
+	def transform(value: String)(u: Unit)(c: PluginContext) = value+"bar"
 }
 
 object FilterTestFeature2 extends Feature {
-	val hook = new FilterHook[String]("Test filters")
+	val hook = new FilterHook[String, Unit]("Test filters")
 	val name = "Filter Test"
 	def require = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register(transform _)
-		hook.register(value => (c => value+"qux"))
+		hook.register(value => (s => (c => value+"qux")))
 	}
 	
-	def transform(value: String)(c: PluginContext) = value+"bar"
+	def transform(value: String)(u: Unit)(c: PluginContext) = value+"bar"
 }
 
 /*
