@@ -133,7 +133,8 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 		val builder = new PluginContextBuilder(features, plugins)
 		for (plugin <- plugins)
 			plugin.init(builder)
-		val registry: Map[Hook[_], List[_]] = builder.registry.toMap
+		val registry: Map[Hook[_], List[_]] = 
+			builder.registry.toMap.mapValues(_.toList)
 
 		new PluginContextImpl(features, plugins, registry)
 	}

@@ -30,8 +30,8 @@ abstract class SelectableHook[T](name: String) extends Hook[T](name) {
 }
 
 //  A hook that fires an action
-class ActionHook[S](name: String) extends Hook[S => PluginContext => Unit](name) {
-	def register(f: S => PluginContext => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
+class ActionHook[S](name: String) extends Hook[(S) => (PluginContext) => Unit](name) {
+	def register(f: (S) => (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
 	//def register(f: S => Unit)(implicit c: PluginContextBuilder) = c.register(this, act(f)_)
 	//def act(f: S => Unit)(s: S)(implicit c: PluginContext) { f(s) }
 
@@ -40,14 +40,22 @@ class ActionHook[S](name: String) extends Hook[S => PluginContext => Unit](name)
 }
 
 //  A hook that transforms a value
-class FilterHook[V, S](name: String) extends Hook[V => S => PluginContext => V](name) {
-	def register(f: V => S => PluginContext => V)(implicit c: PluginContextBuilder) = c.register(this, f)
+class FilterHook[V](name: String) extends Hook[(V) => (PluginContext) => V](name) {
+	def register(f: (V) => (PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, f)
+	def register(f: (V) => V)(implicit c: PluginContextBuilder, d: DummyImplicit) = c.register(this, FilterAdapter(f).filter _)
+	
+	case class FilterAdapter(f: (V) => V) { def filter(v: V)(c: PluginContext) = f(v) }
+	
+	//def register(f: V => PluginContext => V)(implicit c: PluginContextBuilder) = c.register(this, f)
 	//def register(f: V => V)(implicit c: PluginContextBuilder) = c.register(this, act(f)_)
 	//def act(f: V => Unit)(v: V)(s: S)(implicit c: PluginContext) = f(v)
 
 	def filters(implicit c: PluginContext) = get
-	def apply(value: V)(s: S)(implicit c: PluginContext): V =
-		filters.foldLeft(value)((value: V, filter: V => S => PluginContext => V) => filter(value)(s)(c))
+	def apply(value: V)(implicit c: PluginContext): V =
+		filters.foldLeft(value) { 
+			//(value: V, filter: (V) => (PluginContext) => V) => filter(value)(c)
+			(value, filter) => filter(value)(c)
+		}
 }
 
 /*

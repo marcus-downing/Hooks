@@ -19,14 +19,16 @@ class PluginContextAdapter(inner: PluginContext) extends PluginContext {
 }
 
 class PluginContextBuilder (val features: List[Feature], val plugins: List[Plugin]) extends PluginContext {
-	val registry: HashMap[Hook[_], List[_]] = HashMap()
-	def getValues[S](hook: Hook[S]) = registry.get(hook).getOrElse(List()).asInstanceOf[List[S]]
+	val registry: HashMap[Hook[_], ListBuffer[_]] = HashMap()
+	def getValues[S](hook: Hook[S]) = registry.get(hook).getOrElse(ListBuffer()).asInstanceOf[ListBuffer[S]]
 	
 	def register[S](hook: Hook[S], value: S) {
-		registry(hook) = value :: getValues(hook)
+		val list = getValues(hook)
+		list += value
+		registry(hook) = list
 	}
 	def hasRegistered[S](hook: Hook[S]) = !getValues(hook).isEmpty
-	def get[S](hook: Hook[S]) = getValues(hook)
+	def get[S](hook: Hook[S]) = getValues(hook).toList
 }
 
 case class PluginContextImpl (
