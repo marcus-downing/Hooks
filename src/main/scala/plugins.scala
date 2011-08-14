@@ -1,4 +1,4 @@
-package hooks
+﻿package hooks
 
 /**
  * Features are plugins which are visible at the top level. Other plugins are only available as dependencies.
