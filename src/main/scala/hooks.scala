@@ -9,11 +9,15 @@ import scala.Product
  * attached to them.
  */
 
-class Hook[S](val name: String, val id: Int = PluginRepository.uniqueId) {
+class Hook[S](val name: String) {
 	def get(implicit c: PluginContext) = c.get(this)
 }
 
 //  A hook that stores objects of a given type
+object ComponentHook {
+	def apply[T](name: String) = new ComponentHook[T](name)
+}
+
 class ComponentHook[T](name: String) extends Hook[T](name) {
 	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
 
@@ -21,7 +25,7 @@ class ComponentHook[T](name: String) extends Hook[T](name) {
 }
 
 //  A hook that selects just one object
-abstract class SelectableHook[T](name: String) extends Hook[T](name) {
+abstract class SelectableHook[T](name: String)(selector: (List[T], PluginContext) => Option[T]) extends Hook[T](name) {
 	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
 
 	def selectValue(values: List[T])(implicit c: PluginContext): Option[T]

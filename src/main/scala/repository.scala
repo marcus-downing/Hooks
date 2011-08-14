@@ -164,9 +164,6 @@ class SynchronizedPluginRepository(inner: PluginRepositoryImpl) extends PluginRe
 }
 
 object PluginRepository extends PluginRepository {
-	private var _nextId = 1
-	def uniqueId = { val id = _nextId; _nextId = _nextId + 1; id }
-	
 	val instance = new SynchronizedPluginRepository(new PluginRepositoryImpl)
 	def apply() = new PluginRepositoryImpl
 	
