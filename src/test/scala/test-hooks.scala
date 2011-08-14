@@ -74,6 +74,14 @@ class HookSpec extends Spec {
 				//println(result)
 				assert(result == "foobarqux")
 			}
+			it("should pass a value through unchanged") {
+				val repo = PluginRepository()
+				repo.require(FilterTestFeature7)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = FilterTestFeature7.hook("foo")
+				assert(result == "foo")
+			}
 		}
 		
 		describe("with simple actions") {
@@ -101,7 +109,7 @@ class HookSpec extends Spec {
 				implicit val context = repo.makeContext(Nil)
 				
 				ActionTestFeature3.hook()
-				println(ActionTestFeature3.message)
+				//println(ActionTestFeature3.message)
 				assert(ActionTestFeature3.message == "bar")
 			}
 		}
@@ -132,6 +140,67 @@ class HookSpec extends Spec {
 				
 				ActionTestFeature7.hook(data)
 				assert(ActionTestFeature7.message == "bar")
+			}
+		}
+		
+		describe("with a buffer") {
+			it("should collect fragments") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature1)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature1.hook()
+				assert(result.contains("foo") && result.contains("bar"))
+			}
+			it("should collect fragments in the right order") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature2)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature2.hook()
+				assert(result == "barfoo")
+			}
+			it("should apply prefix, affix and infix") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature3)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature3.hook()
+				assert(result == "(foo,bar)")
+			}
+			it("should delay calculating fragments") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature4)
+				implicit val context = repo.makeContext(Nil)
+				
+				BufferTestFeature4.message = "bar"
+				val result = BufferTestFeature4.hook()
+				assert(result == "bar")
+			}
+			it("should transform fragments to strings with a supplied function") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature5)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature5.hook()
+				assert(result == "foo")
+			}
+			it("should apply the early filter to fragments") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature6)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature6.hook()
+				assert(result == "foobar")
+			}
+			it("should apply the late filter to strings") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature7)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature7.hook()
+				//println("7: "+result)
+				assert(result == "foobar")
 			}
 		}
 	}
@@ -218,6 +287,14 @@ object FilterTestFeature6 extends Feature {
 	}
 }
 
+object FilterTestFeature7 extends Feature {
+	val hook = FilterHook[String]("Test filters 7")
+	val name = "Filter Test 7"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {}
+}
+
 
 object ActionTestFeature1 extends Feature {
 	val hook = new SimpleActionHook("Test Action 1")
@@ -242,7 +319,7 @@ object ActionTestFeature2 extends Feature {
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register(c => message = message+"bar")
-		hook.register(() => message = message+"qux")
+		hook.register(message = message+"qux")
 	}
 }
 
@@ -253,7 +330,7 @@ object ActionTestFeature3 extends Feature {
 	var message = "foo"
 	
 	def init(implicit builder: PluginContextBuilder) {
-		hook.register(() => message = "bar")
+		hook.register(message = "bar")
 	}
 }
 
@@ -263,7 +340,7 @@ object ActionTestFeature4 extends Feature {
 	override def before = List(ActionTestFeature3)
 	
 	def init(implicit builder: PluginContextBuilder) {
-		ActionTestFeature3.hook.register(() => ActionTestFeature3.message = "qux")
+		ActionTestFeature3.hook.register(ActionTestFeature3.message = "qux")
 	}
 }
 
@@ -316,3 +393,98 @@ object ActionTestFeature8 extends Feature {
 	}
 }
 
+object BufferTestFeature1 extends Feature {
+	val hook = BufferHook("Test buffers 1")
+	def name = "Buffer Test Feature 1"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add("foo")
+		hook.add("bar")
+	}
+}
+
+object BufferTestFeature2 extends Feature {
+	val hook = BufferHook("Test buffers 2")
+	def name = "Buffer Test Feature 2"
+	def require = List(BufferTestPlugin2A, BufferTestPlugin2B)
+	
+	def init(implicit builder: PluginContextBuilder) { }
+}
+
+object BufferTestPlugin2A extends Plugin {
+	def name = "Buffer Test Plugin 2A"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		BufferTestFeature2.hook.add("foo")
+	}
+}
+
+object BufferTestPlugin2B extends Plugin {
+	def name = "Buffer Test Plugin 2B"
+	def require = Nil
+	override def before = List(BufferTestPlugin2A)
+	
+	def init(implicit builder: PluginContextBuilder) {
+		BufferTestFeature2.hook.add("bar")
+	}
+}
+
+object BufferTestFeature3 extends Feature {
+	val hook = BufferHook("Test buffers 2", "(", ",", ")")
+	def name = "Buffer Test Feature 2"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add("foo")
+		hook.add("bar")
+	}
+}
+
+object BufferTestFeature4 extends Feature {
+	val hook = BufferHook("Test buffers 4")
+	def name = "Buffer Test Feature 4"
+	def require = Nil
+	var message = "foo"
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add(message)
+	}
+}
+
+object BufferTestFeature5 extends Feature {
+	class Foo
+	object Bar extends Foo
+	val hook = BufferHook[Foo]("Test buffers 5", { foo: Foo => 
+		foo match { case Bar => "foo" }
+	})
+	def name = "Buffer Test Feature 5"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add(Bar)
+	}
+}
+
+object BufferTestFeature6 extends Feature {
+	val hook = BufferHook("Test buffers 6")
+	def name = "Buffer Test Feature 6"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add("foo")
+		hook.earlyFilters.register(fr => fr+"bar")
+	}
+}
+
+object BufferTestFeature7 extends Feature {
+	val hook = BufferHook("Test buffers 7")
+	def name = "Buffer Test Feature 7"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add("foo")
+		hook.lateFilters.register(fr => fr+"bar")
+	}
+}
