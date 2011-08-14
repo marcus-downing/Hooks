@@ -31,33 +31,52 @@ abstract class SelectableHook[T](name: String) extends Hook[T](name) {
 
 //  A hook that fires an action
 class ActionHook[S](name: String) extends Hook[(S) => (PluginContext) => Unit](name) {
-	def register(f: (S) => (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
-	//def register(f: S => Unit)(implicit c: PluginContextBuilder) = c.register(this, act(f)_)
-	//def act(f: S => Unit)(s: S)(implicit c: PluginContext) { f(s) }
-
+	def registerAction(f: (S) => (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
+	def register(f: (S, PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, Adapter(f).filter _)
+	case class Adapter(f: (S, PluginContext) => Unit) { def filter(s: S)(c: PluginContext) = f(s, c) }
+	
 	def actions(implicit c: PluginContext) = get
 	def apply(s: S)(implicit c: PluginContext) { for (action <- actions) action(s)(c) }
 }
 
 //  A hook that transforms a value
+object FilterHook {
+	def apply[V](name: String) = new SimpleFilterHook[V](name)
+	def apply[V, S](name: String) = new FilterHook[V, S](name)
+}
+
+class SimpleFilterHook[V](name: String) extends Hook[(V) => (PluginContext) => V](name) {
+	def registerFilter(f: (V) => (PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, f)
+	
+	def register(f: (V, PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter1(f).filter _)
+	def register(f: (V) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter2(f).filter _)
+	
+	case class Adapter1(f: (V, PluginContext) => V) { def filter(v: V)(c: PluginContext) = f(v, c) }
+	case class Adapter2(f: (V) => V) { def filter(v: V)(c: PluginContext) = f(v) }
+	
+	def filters(implicit c: PluginContext) = get
+	def apply(value: V)(implicit c: PluginContext): V =
+		filters.foldLeft(value) {
+			(value, filter) => filter(value)(c)
+		}
+}
+
 class FilterHook[V, S](name: String) extends Hook[(V) => (S) => (PluginContext) => V](name) {
-	def register(f: (V) => (S) => (PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: (V) => (S) => V)(implicit c: PluginContextBuilder, d: DummyImplicit) = c.register(this, Adapter1(f).filter _)
-	def register(f: (V) => (PluginContext) => V)(implicit c: PluginContextBuilder, d1: DummyImplicit, d2: DummyImplicit) = c.register(this, Adapter2(f).filter _)
-	def register(f: (V) => V)(implicit c: PluginContextBuilder, d1: DummyImplicit, d2: DummyImplicit, d3: DummyImplicit) = c.register(this, Adapter3(f).filter _)
+	def registerFilter(f: (V) => (S) => (PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, f)
 	
-	case class Adapter1(f: (V) => (S) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v)(s) }
-	case class Adapter2(f: (V) => (PluginContext) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v)(c) }
-	case class Adapter3(f: (V) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v) }
+	def register(f: (V, S, PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter1(f).filter _)
+	def register(f: (V, S) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter2(f).filter _)
+	//def register(f: (V, PluginContext) => V)(implicit c: PluginContextBuilder, d: DummyImplicit) = c.register(this, Adapter3(f).filter _)
+	def register(f: (V) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter4(f).filter _)
 	
-	//def register(f: V => PluginContext => V)(implicit c: PluginContextBuilder) = c.register(this, f)
-	//def register(f: V => V)(implicit c: PluginContextBuilder) = c.register(this, act(f)_)
-	//def act(f: V => Unit)(v: V)(s: S)(implicit c: PluginContext) = f(v)
+	case class Adapter1(f: (V, S, PluginContext) =>V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,s,c) }
+	case class Adapter2(f: (V, S) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,s) }
+	//case class Adapter3(f: (V, PluginContext) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,c) }
+	case class Adapter4(f: (V) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v) }
 
 	def filters(implicit c: PluginContext) = get
 	def apply(value: V)(extra: S)(implicit c: PluginContext): V =
 		filters.foldLeft(value) { 
-			//(value: V, filter: (V) => (PluginContext) => V) => filter(value)(c)
 			(value, filter) => filter(value)(extra)(c)
 		}
 }
