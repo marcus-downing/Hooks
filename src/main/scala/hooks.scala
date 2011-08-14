@@ -1,4 +1,4 @@
-﻿package hooks
+package hooks
 
 import scala.Product
 
