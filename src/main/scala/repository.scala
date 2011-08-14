@@ -38,6 +38,13 @@ trait PluginRepository {
 	
 	def makeContext(desiredFeatures: List[Feature]): PluginContext = makeContext(desiredFeatures, p => true)
 	def makeContext(desiredFeatures: List[Feature], permit: Plugin => Boolean): PluginContext
+	
+	def copy = {
+		val copy = new PluginRepositoryImpl
+		copy.require(this.requiredFeatures: _*)
+		copy.register(this.registeredFeatures: _*)
+		copy
+	}
 }
 
 class PluginRepositoryImpl extends PluginRepository with Logging {

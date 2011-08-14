@@ -13,8 +13,8 @@ package hooks
 trait Plugin {
 	def name: String
 	def require: List[Plugin]
-	def before: List[Plugin] = List()
-	def after: List[Plugin] = List()
+	def before: List[Plugin] = Nil
+	def after: List[Plugin] = Nil
 
 	def init(implicit builder: PluginContextBuilder)
 }

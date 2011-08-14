@@ -1,4 +1,4 @@
-import org.scalatest.Spec
+﻿import org.scalatest.Spec
 
 import hooks._
 

@@ -1,4 +1,4 @@
-package hooks
+﻿package hooks
 
 import scala.Product
 
@@ -30,10 +30,29 @@ abstract class SelectableHook[T](name: String) extends Hook[T](name) {
 }
 
 //  A hook that fires an action
+object ActionHook {
+	def apply(name: String) = new SimpleActionHook(name)
+	def simple(name: String) = new SimpleActionHook(name)
+	def apply[S](name: String) = new ActionHook[S](name)
+}
+
+class SimpleActionHook(name: String) extends Hook[(PluginContext) => Unit](name) {
+	def registerAction(f: (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
+	def register(f: (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
+	def register(f: () => Unit)(implicit c: PluginContextBuilder) = c.register(this, Adapter(f).act _)
+	
+	case class Adapter(f: () => Unit) { def act(c: PluginContext) = f() }
+	
+	def actions(implicit c: PluginContext) = get
+	def apply()(implicit c: PluginContext) { for (action <- actions) action(c) }
+}
+
 class ActionHook[S](name: String) extends Hook[(S) => (PluginContext) => Unit](name) {
 	def registerAction(f: (S) => (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: (S, PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, Adapter(f).filter _)
-	case class Adapter(f: (S, PluginContext) => Unit) { def filter(s: S)(c: PluginContext) = f(s, c) }
+	def register(f: (S, PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, Adapter1(f).filter _)
+	def register(f: (S) => Unit)(implicit c: PluginContextBuilder) = c.register(this, Adapter2(f).filter _)
+	case class Adapter1(f: (S, PluginContext) => Unit) { def filter(s: S)(c: PluginContext) = f(s, c) }
+	case class Adapter2(f: (S) => Unit) { def filter(s: S)(c: PluginContext) = f(s) }
 	
 	def actions(implicit c: PluginContext) = get
 	def apply(s: S)(implicit c: PluginContext) { for (action <- actions) action(s)(c) }
