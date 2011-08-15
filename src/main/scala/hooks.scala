@@ -153,7 +153,10 @@ class GuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Boolean]
   class Adapter2(f: (T) => Boolean) { def guard(v: T)(c: PluginContext) = f(v) }
   
   def guards(implicit c: PluginContext) = get
-  def apply(value: T)(implicit c: PluginContext): Boolean = guards.forall(g => g(value)(c))
+  def apply(value: T)(implicit c: PluginContext): Boolean = {
+    val guards = this.guards
+    guards.isEmpty || guards.forall(g => g(value)(c))
+  }
 }
 
 class StandaloneGuardHook[T](name: String) {
@@ -162,7 +165,10 @@ class StandaloneGuardHook[T](name: String) {
   def registerGuard(f: (T) => Boolean) = guards += f
   def register(f: (T) => Boolean) = guards += f
   
-  def apply(value: T): Boolean = guards.forall(g => g(value))
+  def apply(value: T): Boolean = {
+    val guards = this.guards
+    guards.isEmpty || guards.forall(g => g(value))
+  }
 }
 
 

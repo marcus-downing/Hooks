@@ -203,6 +203,27 @@ class HookSpec extends Spec {
 				assert(result == "foobar")
 			}
 		}
+		
+		describe("with a guard") {
+		  it ("should approve by default") {
+		    val repo = PluginRepository()
+		    repo.require(GuardTestFeature1)
+		    implicit val context = repo.makeContext(Nil)
+		    
+		    val result = GuardTestFeature1.hook("foo")
+		    assert(result)
+		  }
+		  
+		  it ("should refuse when any guard refuses") {
+		    val repo = PluginRepository()
+		    repo.require(GuardTestFeature2)
+		    implicit val context = repo.makeContext(Nil)
+		    
+		    val result = GuardTestFeature2.hook("foo")
+		    assert(!result)
+		  }
+		}
+		
 	}
 }
 
@@ -488,3 +509,24 @@ object BufferTestFeature7 extends Feature {
 		hook.lateFilters.register(fr => fr+"bar")
 	}
 }
+
+object GuardTestFeature1 extends Feature {
+	val hook = GuardHook[String]("Test guards 1")
+	def name = "Guard Test Feature 1"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+	}
+}
+
+object GuardTestFeature2 extends Feature {
+	val hook = GuardHook[String]("Test guards 2")
+	def name = "Guard Test Feature 2"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.register(m => m == "foo")
+		hook.register(m => m == "bar")
+	}
+}
+
