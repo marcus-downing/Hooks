@@ -2,6 +2,10 @@ package hooks
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 
+object PluginContext {
+  def dummy = new PluginContextBuilder(Nil, Nil)
+}
+
 trait PluginContext {
 	def features: List[Feature]
 	def plugins: List[Plugin]
@@ -39,3 +43,4 @@ case class PluginContextImpl (
 	def hasRegistered[S](hook: Hook[S]) = !registry.get(hook).getOrElse(List()).isEmpty
 	def get[S](hook: Hook[S]) = registry.get(hook).getOrElse(List()).map(_.asInstanceOf[S])
 }
+

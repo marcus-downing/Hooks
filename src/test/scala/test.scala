@@ -3,6 +3,16 @@ import org.scalatest.Spec
 import hooks._
 
 class RepoSpec extends Spec {
+  describe("A dummy context") {
+    it("should store hook") {
+      implicit val dummy = PluginContext.dummy
+      val hook = FilterHook[String]("Dummy test")
+      hook.register(v => "bar")
+      val result = hook("foo")
+      assert(result == "bar")
+    }
+  }
+  
 	describe("A repository") {
 		describe("when empty") {
 			it ("should be empty") {
