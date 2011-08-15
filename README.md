@@ -36,7 +36,7 @@ Hooks is a simple Scala library for handling plugins.
         }
 
 ## Read more
-- [Overview](Hooks/wiki/Overview)
+- Start here: [Overview](Hooks/wiki/Overview) &rarr;
 
 - [User Guide](Hooks/wiki/User Guide)
 
