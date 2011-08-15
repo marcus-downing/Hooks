@@ -27,6 +27,33 @@ class RepoSpec extends Spec {
 				repo.register(TestFeature)
 				assert(repo.hasFeature(TestFeature))
 			}
+
+      describe("and a security guard") {
+        it("should refuse a feature if it needs to") {
+          val repo = PluginRepository()
+          repo.register(TestFeature)
+          repo.securityGuard.register(plugin => false)
+          val context = repo.makeContext(List(TestFeature))
+          assert(!context.hasFeature(TestFeature))
+        }
+        it("should refuse required features") {
+          val repo = PluginRepository()
+          repo.require(TestFeature)
+          repo.securityGuard.register(plugin => false)
+          val context = repo.makeContext(List(TestFeature))
+          assert(!context.hasFeature(TestFeature))
+        }
+        it("should refuse dependencies") {
+          val repo = PluginRepository()
+          repo.register(TestFeature2)
+          repo.securityGuard.register( plugin => plugin match {
+            case TestPlugin2B => false
+            case _ => true
+          })
+          val context = repo.makeContext(List(TestFeature2))
+          assert(context.hasPlugin(TestPlugin2A) && !context.hasPlugin(TestPlugin2B))
+        }
+      }
 			
 			describe("not required") {
 				it("should produce a context with no features") {
