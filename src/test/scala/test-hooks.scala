@@ -199,8 +199,16 @@ class HookSpec extends Spec {
 				implicit val context = repo.makeContext(Nil)
 				
 				val result = BufferTestFeature7.hook()
-				//println("7: "+result)
 				assert(result == "foobar")
+			}
+			it("should nest buffers") {
+				val repo = PluginRepository()
+				repo.require(BufferTestFeature8)
+				implicit val context = repo.makeContext(Nil)
+				
+				val result = BufferTestFeature8.hook()
+				//println("8: "+result)
+				assert(result == "foobarquxged")
 			}
 		}
 		
@@ -507,6 +515,21 @@ object BufferTestFeature7 extends Feature {
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add("foo")
 		hook.lateFilters.register(fr => fr+"bar")
+	}
+}
+
+object BufferTestFeature8 extends Feature {
+	val hook = BufferHook("Test buffers 8")
+	val innerhook = BufferHook("Test buffers 8 (inner)")
+	def name = "Buffer Test Feature 8"
+	def require = Nil
+	
+	def init(implicit builder: PluginContextBuilder) {
+		hook.add("foo")
+		hook.add(innerhook)
+		hook.add("ged")
+		innerhook.add("bar")
+		innerhook.add("qux")
 	}
 }
 
