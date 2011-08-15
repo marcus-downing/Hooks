@@ -118,21 +118,22 @@ object BufferHook {
 	def apply[T](name: String, f: (T) => String) = new BufferHook[T](name, "", "", "", f)
 }
 
-class BufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[(PluginContext) => T](name) {
+class BufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[(PluginContext) => String](name) {
 	val earlyFilters = FilterHook[T](name+" (early filter)")
 	val lateFilters = FilterHook[String](name+" (late filter)")
 
-	def registerFragment(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter(f).render _)
-	def add(f: => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter(f).render _)
+	def registerFragment(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).render _)
+	def add(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).render _)
+	def add(f: => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).render _)
+	def add(nested: BufferHook[_])(implicit c: PluginContextBuilder) = c.register(this, new NestAdapter(nested).render _)
 	
-	class Adapter(f: => T) { def render(c: PluginContext): T = f }
+	class Adapter1(f: (PluginContext) => T) { def render(c: PluginContext): String = fix(earlyFilters(f(c))(c)) }
+	class Adapter2(f: => T) { def render(c: PluginContext): String = fix(earlyFilters(f)(c)) }
+	class NestAdapter(nested: BufferHook[_]) { def render(c: PluginContext): String = nested()(c) }
 	
 	def fragments(implicit c: PluginContext) = get
 	def apply()(implicit c: PluginContext) = {
-		val pieces: List[T] = fragments.map((f: (PluginContext) => T) => f(c)).map(t => earlyFilters(t))
-		val strings: List[String] = pieces.map(fr => fix(fr)).map(fr => lateFilters(fr))
+		val strings = fragments.map((f: (PluginContext) => String) => lateFilters(f(c))(c))
 		strings.mkString(prefix, infix, affix)
 	}
 }
