@@ -1,6 +1,7 @@
 package hooks
 
 import scala.Product
+import scala.collection.mutable.{ListBuffer}
 
 /**
  * Hooks
@@ -135,6 +136,35 @@ class BufferHook[T](name: String, prefix: String, infix: String, affix: String, 
 		strings.mkString(prefix, infix, affix)
 	}
 }
+
+
+//  A hook that approves or rejects a value
+object GuardHook {
+  def apply[T](name: String) = new GuardHook[T](name)
+  def standalone[T](name: String) = new StandaloneGuardHook[T](name)
+}
+
+class GuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Boolean](name) {
+  def registerGuard(f: (T) => (PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, f)
+  def register(f: (T, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).guard _)
+  def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).guard _)
+  
+  class Adapter1(f: (T, PluginContext) => Boolean) { def guard(v: T)(c: PluginContext) = f(v,c) }
+  class Adapter2(f: (T) => Boolean) { def guard(v: T)(c: PluginContext) = f(v) }
+  
+  def guards(implicit c: PluginContext) = get
+  def apply(value: T)(implicit c: PluginContext): Boolean = guards.forall(g => g(value)(c))
+}
+
+class StandaloneGuardHook[T](name: String) {
+  val guards = new ListBuffer[(T) => Boolean]()
+  
+  def registerGuard(f: (T) => Boolean) = guards += f
+  def register(f: (T) => Boolean) = guards += f
+  
+  def apply(value: T): Boolean = guards.forall(g => g(value))
+}
+
 
 /*
 //  A hook that converts between two types

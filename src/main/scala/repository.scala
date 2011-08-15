@@ -36,8 +36,7 @@ trait PluginRepository {
 	def hasFeature(feature: Feature): Boolean
 	def isRequired(feature: Feature): Boolean
 	
-	def makeContext(desiredFeatures: List[Feature]): PluginContext = makeContext(desiredFeatures, p => true)
-	def makeContext(desiredFeatures: List[Feature], permit: Plugin => Boolean): PluginContext
+	def makeContext(desiredFeatures: List[Feature]): PluginContext
 	
 	def copy = {
 		val copy = new PluginRepositoryImpl
@@ -58,8 +57,10 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 	def hasFeature(feature: Feature) = registeredFeatures.contains(feature)
 	def isRequired(feature: Feature) = requiredFeatures.contains(feature)
 	
+	val securityGuard = GuardHook.standalone[Plugin]("Repository guard")
+	
 	//  find all plugin dependencies
-	def tracePlugins(head: List[Plugin], permit: Plugin => Boolean) = {
+	def tracePlugins(head: List[Plugin]) = {
 		log("TRACE: "+head.l)
 		def trace(past: List[Plugin], present: List[Plugin]): List[Plugin] = {
 			log("  Tracing: "+present.l+" / So far: "+past.l)
@@ -78,8 +79,8 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 					log("    Testing: "+p.name)
 					if (past.contains(p)) log("      In past")
 					if (present.contains(p)) log("     In present")
-					if (!permit(p)) log("      Not permitted")
-					!past.contains(p) && !present.contains(p) && permit(p)
+					if (!securityGuard(p)) log("      Not permitted")
+					!past.contains(p) && !present.contains(p) && securityGuard(p)
 				}
 				log("  Future 2: "+future2.l)
 				trace(present ::: past, future2)
@@ -132,9 +133,9 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 	}
 
 	//  create a context
-	def makeContext(desiredFeatures: List[Feature], permit: Plugin => Boolean = p => true) = {
-		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures.toList).filter(f => permit(f))
-		val plugins = sortPlugins(tracePlugins(features, permit))
+	def makeContext(desiredFeatures: List[Feature]) = {
+		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures.toList).filter(f => securityGuard(f))
+		val plugins = sortPlugins(tracePlugins(features))
 		
 		//  initialise all the plugins in order
 		val builder = new PluginContextBuilder(features, plugins)
@@ -147,7 +148,7 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 	}
 }
 
-class SynchronizedPluginRepository(inner: PluginRepositoryImpl) extends PluginRepository {
+class SynchronizedPluginRepository(val inner: PluginRepositoryImpl) extends PluginRepository {
 	def registeredFeatures: Seq[Feature] = inner.synchronized { inner.registeredFeatures }
 	def requiredFeatures: Seq[Feature] = inner.synchronized { inner.requiredFeatures }
 	def optionalFeatures: Seq[Feature] = inner.synchronized { inner.optionalFeatures }
@@ -159,8 +160,8 @@ class SynchronizedPluginRepository(inner: PluginRepositoryImpl) extends PluginRe
 	def hasFeature(feature: Feature) = inner.synchronized { inner.hasFeature(feature) }
 	def isRequired(feature: Feature) = inner.synchronized { inner.isRequired(feature) }
 	
-	def makeContext(desiredFeatures: List[Feature], permit: Plugin => Boolean) =
-		inner.synchronized { inner.makeContext(desiredFeatures, permit) }
+	def makeContext(desiredFeatures: List[Feature]) =
+		inner.synchronized { inner.makeContext(desiredFeatures) }
 }
 
 object PluginRepository extends PluginRepository {
@@ -178,5 +179,6 @@ object PluginRepository extends PluginRepository {
 	def hasFeature(feature: Feature) = instance.hasFeature(feature)
 	def isRequired(feature: Feature) = instance.isRequired(feature)
 	
-	def makeContext(desiredFeatures: List[Feature], permit: Plugin => Boolean) = instance.makeContext(desiredFeatures, permit)
+	def securityGuard = instance.inner.securityGuard
+	def makeContext(desiredFeatures: List[Feature]) = instance.makeContext(desiredFeatures)
 }
