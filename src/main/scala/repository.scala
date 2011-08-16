@@ -57,10 +57,10 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 	def hasFeature(feature: Feature) = registeredFeatures.contains(feature)
 	def isRequired(feature: Feature) = requiredFeatures.contains(feature)
 	
-	val securityGuard = GuardHook.standalone[Plugin]("Repository guard")
+	val securityGuard = GuardHook.standalone[Plugin, Option[Any]]("Repository guard")
 	
 	//  find all plugin dependencies
-	def tracePlugins(head: List[Plugin]) = {
+	def tracePlugins(head: List[Plugin], token: Option[Any]) = {
 		log("TRACE: "+head.l)
 		def trace(past: List[Plugin], present: List[Plugin]): List[Plugin] = {
 			log("  Tracing: "+present.l+" / So far: "+past.l)
@@ -68,19 +68,19 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 			else {
 				present.foreach { p =>
 					log("    Plugin: "+p.name)
-					log("      Requires: "+p.require.l)
+					log("      Depends on: "+p.depend.l)
 				}
 				val future = for {
 					plugin <- present
-					p <- plugin.require
+					p <- plugin.depend
 				} yield p
 				log("  Future 1: "+future.l);
 				val future2 = future.distinct.filter { p =>
 					log("    Testing: "+p.name)
 					if (past.contains(p)) log("      In past")
 					if (present.contains(p)) log("     In present")
-					if (!securityGuard(p)) log("      Not permitted")
-					!past.contains(p) && !present.contains(p) && securityGuard(p)
+					if (!securityGuard(p)(token)) log("      Not permitted")
+					!past.contains(p) && !present.contains(p) && securityGuard(p)(token)
 				}
 				log("  Future 2: "+future2.l)
 				trace(present ::: past, future2)
@@ -133,9 +133,12 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 	}
 
 	//  create a context
-	def makeContext(desiredFeatures: List[Feature]) = {
-		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures.toList).filter(f => securityGuard(f))
-		val plugins = sortPlugins(tracePlugins(features))
+	def makeContext(desiredFeatures: List[Feature]): PluginContext = makeContext(desiredFeatures, None)
+	def makeContext(desiredFeatures: List[Feature], token: Any): PluginContext = makeContext(desiredFeatures, Some(token))
+
+	def makeContext(desiredFeatures: List[Feature], token: Option[Any]): PluginContext = {
+		val features = (desiredFeatures.intersect(optionalFeatures) ::: requiredFeatures.toList).filter(f => securityGuard(f)(token))
+		val plugins = sortPlugins(tracePlugins(features, token))
 		
 		//  initialise all the plugins in order
 		val builder = new PluginContextBuilder(features, plugins)

@@ -141,11 +141,13 @@ class BufferHook[T](name: String, prefix: String, infix: String, affix: String, 
 
 //  A hook that approves or rejects a value
 object GuardHook {
-  def apply[T](name: String) = new GuardHook[T](name)
-  def standalone[T](name: String) = new StandaloneGuardHook[T](name)
+  def apply[T](name: String) = new SimpleGuardHook[T](name)
+  def apply[T, S](name: String) = new GuardHook[T, S](name)
+  def standalone[T](name: String) = new SimpleStandaloneGuardHook[T](name)
+  def standalone[T, S](name: String) = new StandaloneGuardHook[T, S](name)
 }
 
-class GuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Boolean](name) {
+class SimpleGuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Boolean](name) {
   def registerGuard(f: (T) => (PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, f)
   def register(f: (T, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).guard _)
   def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).guard _)
@@ -160,7 +162,24 @@ class GuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Boolean]
   }
 }
 
-class StandaloneGuardHook[T](name: String) {
+class GuardHook[T, S](name: String) extends Hook[(T) => (S) => (PluginContext) => Boolean](name) {
+  def registerGuard(f: (T) => (S) => (PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, f)
+  def register(f: (T, S, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).guard _)
+  def register(f: (T, S) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).guard _)
+  def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter3(f).guard _)
+  
+  class Adapter1(f: (T, S, PluginContext) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v,s,c) }
+  class Adapter2(f: (T, S) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v,s) }
+  class Adapter3(f: (T) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v) }
+  
+  def guards(implicit c: PluginContext) = get
+  def apply(value: T)(extra: S)(implicit c: PluginContext): Boolean = {
+    val guards = this.guards
+    guards.isEmpty || guards.forall(g => g(value)(extra)(c))
+  }
+}
+
+class SimpleStandaloneGuardHook[T](name: String) {
   val guards = new ListBuffer[(T) => Boolean]()
   
   def registerGuard(f: (T) => Boolean) = guards += f
@@ -169,6 +188,22 @@ class StandaloneGuardHook[T](name: String) {
   def apply(value: T): Boolean = {
     val guards = this.guards
     guards.isEmpty || guards.forall(g => g(value))
+  }
+}
+
+class StandaloneGuardHook[T, S](name: String) {
+  val guards = new ListBuffer[(T) => (S) => Boolean]()
+  
+  def registerGuard(f: (T) => (S) => Boolean) = guards += f
+  def register(f: (T, S) => Boolean) = guards += new Adapter1(f).guard _
+  def register(f: (T) => Boolean) = guards += new Adapter2(f).guard _
+  
+  class Adapter1(f: (T, S) => Boolean) { def guard(t: T)(s: S) = f(t, s) }
+  class Adapter2(f: (T) => Boolean) { def guard(t: T)(s: S) = f(t) }
+  
+  def apply(value: T)(extra: S): Boolean = {
+    val guards = this.guards
+    guards.isEmpty || guards.forall(g => g(value)(extra))
   }
 }
 

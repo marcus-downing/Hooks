@@ -53,6 +53,16 @@ class RepoSpec extends Spec {
           val context = repo.makeContext(List(TestFeature2))
           assert(context.hasPlugin(TestPlugin2A) && !context.hasPlugin(TestPlugin2B))
         }
+        it("should use a security token to decide") {
+          val repo = PluginRepository()
+          repo.require(TestFeature2)
+          repo.securityGuard.register((plugin, token) => {
+            assert(token == Some("foo"))
+            true
+          })
+          val context = repo.makeContext(Nil, "foo")
+          assert(context.hasPlugin(TestPlugin2A))
+        }
       }
 			
 			describe("not required") {
@@ -182,7 +192,7 @@ class RepoSpec extends Spec {
 
 object TestFeature extends Feature {
 	def name = "Test Feature"
-	def require = Nil
+	def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
@@ -190,19 +200,19 @@ object TestFeature extends Feature {
 
 object TestFeature2 extends Feature {
 	def name = "Test Feature 2"
-	def require = List(TestPlugin2A, TestPlugin2B)
+	def depend = List(TestPlugin2A, TestPlugin2B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin2A extends Plugin {
 	def name = "Test Plugin 2A"
-	def require = Nil
+	def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin2B extends Plugin {
 	def name = "Test Plugin 2B"
-	def require = Nil
+	def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
@@ -210,20 +220,20 @@ object TestPlugin2B extends Plugin {
 
 object TestFeature3 extends Feature {
 	def name = "Test Feature 3"
-	def require = List(TestPlugin3A, TestPlugin3B)
+	def depend = List(TestPlugin3A, TestPlugin3B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin3A extends Plugin {
 	def name = "Test Plugin 3A"
-	def require = Nil
+	def depend = Nil
 	override def before = List(TestPlugin3B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin3B extends Plugin {
 	def name = "Test Plugin 3B"
-	def require = Nil
+	def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
@@ -231,19 +241,19 @@ object TestPlugin3B extends Plugin {
 
 object TestFeature4 extends Feature {
 	def name = "Test Feature 4"
-	def require = List(TestPlugin4A, TestPlugin4B)
+	def depend = List(TestPlugin4A, TestPlugin4B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin4A extends Plugin {
 	def name = "Test Plugin 4A"
-	def require = Nil
+	def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin4B extends Plugin {
 	def name = "Test Plugin 4B"
-	def require = Nil
+	def depend = Nil
 	override def after = List(TestPlugin4A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
@@ -252,20 +262,20 @@ object TestPlugin4B extends Plugin {
 
 object TestFeature5 extends Feature {
 	def name = "Test Feature 5"
-	def require = List(TestPlugin5A, TestPlugin5B)
+	def depend = List(TestPlugin5A, TestPlugin5B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin5A extends Plugin {
 	def name = "Test Plugin 5A"
-	def require = Nil
+	def depend = Nil
 	override def after = List(TestPlugin5B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin5B extends Plugin {
 	def name = "Test Plugin 5B"
-	def require = Nil
+	def depend = Nil
 	override def after = List(TestPlugin5A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
@@ -274,13 +284,13 @@ object TestPlugin5B extends Plugin {
 
 object TestFeature6 extends Feature {
 	def name = "Test Feature 6"
-	def require = List(TestPlugin6)
+	def depend = List(TestPlugin6)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin6 extends Plugin {
 	def name = "Test Plugin 6"
-	def require = Nil
+	def depend = Nil
 	override def after = List(TestPlugin5A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
@@ -289,18 +299,18 @@ object TestPlugin6 extends Plugin {
 
 object TestFeature7 extends Feature {
 	def name = "Test Feature 7"
-	def require = List(TestPlugin7A)
+	def depend = List(TestPlugin7A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin7A extends Plugin {
 	def name = "Test Plugin 7A"
-	def require = List(TestPlugin7B)
+	def depend = List(TestPlugin7B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin7B extends Plugin {
 	def name = "Test Plugin 7B"
-	def require = List(TestFeature7)
+	def depend = List(TestFeature7)
 	def init(implicit builder: PluginContextBuilder) { }
 }

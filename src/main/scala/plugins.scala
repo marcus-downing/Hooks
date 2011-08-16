@@ -12,7 +12,7 @@ package hooks
 
 trait Plugin {
 	def name: String
-	def require: List[Plugin]
+	def depend: List[Plugin]
 	def before: List[Plugin] = Nil
 	def after: List[Plugin] = Nil
 

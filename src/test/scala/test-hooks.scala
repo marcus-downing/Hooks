@@ -238,7 +238,7 @@ class HookSpec extends Spec {
 object ComponentTestFeature extends Feature {
 	val hook = new ComponentHook[String]("Test components")
 	val name = "Component Test"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register("Foo")
@@ -251,7 +251,7 @@ object ComponentTestFeature extends Feature {
 object FilterTestFeature extends Feature {
 	val hook = FilterHook[String]("Test filters 1")
 	val name = "Filter Test"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.registerFilter(transform _)
@@ -263,7 +263,7 @@ object FilterTestFeature extends Feature {
 object FilterTestFeature2 extends Feature {
 	val hook = FilterHook[String]("Test filters 2")
 	val name = "Filter Test 2"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register((value, c) => value+"bar")
@@ -274,7 +274,7 @@ object FilterTestFeature2 extends Feature {
 object FilterTestFeature3 extends Feature {
 	val hook = FilterHook[String]("Test filters 3")
 	val name = "Filter Test 3"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register(value => value+"bar")
@@ -284,7 +284,7 @@ object FilterTestFeature3 extends Feature {
 object FilterTestFeature4 extends Feature {
 	val hook = FilterHook[String, List[String]]("Test filters 4")
 	val name = "Filter Test 4"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.registerFilter(transform _)
@@ -296,7 +296,7 @@ object FilterTestFeature4 extends Feature {
 object FilterTestFeature5 extends Feature {
 	val hook = FilterHook[String, List[String]]("Test filters 5")
 	val name = "Filter Test 5"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register((value, data, s) => value+data(1))
@@ -308,7 +308,7 @@ object FilterTestFeature5 extends Feature {
 object FilterTestFeature6 extends Feature {
 	val hook = FilterHook[String, List[String]]("Test filters 6")
 	val name = "Filter Test 6"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register((value, data) => value+data(1))
@@ -319,7 +319,7 @@ object FilterTestFeature6 extends Feature {
 object FilterTestFeature7 extends Feature {
 	val hook = FilterHook[String]("Test filters 7")
 	val name = "Filter Test 7"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {}
 }
@@ -328,7 +328,7 @@ object FilterTestFeature7 extends Feature {
 object ActionTestFeature1 extends Feature {
 	val hook = new SimpleActionHook("Test Action 1")
 	def name = "Action Test Feature 1"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.registerAction(testMethod _)
@@ -343,7 +343,7 @@ object ActionTestFeature1 extends Feature {
 object ActionTestFeature2 extends Feature {
 	val hook = new SimpleActionHook("Test Action 2")
 	def name = "Action Test Feature 2"
-	def require = Nil
+	def depend = Nil
 	var message = "foo"
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -355,7 +355,7 @@ object ActionTestFeature2 extends Feature {
 object ActionTestFeature3 extends Feature {
 	val hook = new SimpleActionHook("Test Action 2")
 	def name = "Action Test Feature 3"
-	def require = Nil
+	def depend = Nil
 	var message = "foo"
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -365,7 +365,7 @@ object ActionTestFeature3 extends Feature {
 
 object ActionTestFeature4 extends Feature {
 	def name = "Action Test Feature 4"
-	def require = Nil
+	def depend = Nil
 	override def before = List(ActionTestFeature3)
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -377,7 +377,7 @@ object ActionTestFeature4 extends Feature {
 object ActionTestFeature5 extends Feature {
 	val hook = ActionHook[String]("Test Action 1")
 	def name = "Action Test Feature 5"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.registerAction(testMethod _)
@@ -392,7 +392,7 @@ object ActionTestFeature5 extends Feature {
 object ActionTestFeature6 extends Feature {
 	val hook = ActionHook[List[String]]("Test Action 2")
 	def name = "Action Test Feature 6"
-	def require = Nil
+	def depend = Nil
 	var message = "foo"
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -404,7 +404,7 @@ object ActionTestFeature6 extends Feature {
 object ActionTestFeature7 extends Feature {
 	val hook = ActionHook[List[String]]("Test Action 2")
 	def name = "Action Test Feature 7"
-	def require = Nil
+	def depend = Nil
 	var message = "foo"
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -414,7 +414,7 @@ object ActionTestFeature7 extends Feature {
 
 object ActionTestFeature8 extends Feature {
 	def name = "Action Test Feature 8"
-	def require = Nil
+	def depend = Nil
 	override def before = List(ActionTestFeature7)
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -425,7 +425,7 @@ object ActionTestFeature8 extends Feature {
 object BufferTestFeature1 extends Feature {
 	val hook = BufferHook("Test buffers 1")
 	def name = "Buffer Test Feature 1"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add("foo")
@@ -436,14 +436,14 @@ object BufferTestFeature1 extends Feature {
 object BufferTestFeature2 extends Feature {
 	val hook = BufferHook("Test buffers 2")
 	def name = "Buffer Test Feature 2"
-	def require = List(BufferTestPlugin2A, BufferTestPlugin2B)
+	def depend = List(BufferTestPlugin2A, BufferTestPlugin2B)
 	
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object BufferTestPlugin2A extends Plugin {
 	def name = "Buffer Test Plugin 2A"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		BufferTestFeature2.hook.add("foo")
@@ -452,7 +452,7 @@ object BufferTestPlugin2A extends Plugin {
 
 object BufferTestPlugin2B extends Plugin {
 	def name = "Buffer Test Plugin 2B"
-	def require = Nil
+	def depend = Nil
 	override def before = List(BufferTestPlugin2A)
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -463,7 +463,7 @@ object BufferTestPlugin2B extends Plugin {
 object BufferTestFeature3 extends Feature {
 	val hook = BufferHook("Test buffers 2", "(", ",", ")")
 	def name = "Buffer Test Feature 2"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add("foo")
@@ -474,7 +474,7 @@ object BufferTestFeature3 extends Feature {
 object BufferTestFeature4 extends Feature {
 	val hook = BufferHook("Test buffers 4")
 	def name = "Buffer Test Feature 4"
-	def require = Nil
+	def depend = Nil
 	var message = "foo"
 	
 	def init(implicit builder: PluginContextBuilder) {
@@ -489,7 +489,7 @@ object BufferTestFeature5 extends Feature {
 		foo match { case Bar => "foo" }
 	})
 	def name = "Buffer Test Feature 5"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add(Bar)
@@ -499,7 +499,7 @@ object BufferTestFeature5 extends Feature {
 object BufferTestFeature6 extends Feature {
 	val hook = BufferHook("Test buffers 6")
 	def name = "Buffer Test Feature 6"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add("foo")
@@ -510,7 +510,7 @@ object BufferTestFeature6 extends Feature {
 object BufferTestFeature7 extends Feature {
 	val hook = BufferHook("Test buffers 7")
 	def name = "Buffer Test Feature 7"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add("foo")
@@ -522,7 +522,7 @@ object BufferTestFeature8 extends Feature {
 	val hook = BufferHook("Test buffers 8")
 	val innerhook = BufferHook("Test buffers 8 (inner)")
 	def name = "Buffer Test Feature 8"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.add("foo")
@@ -536,7 +536,7 @@ object BufferTestFeature8 extends Feature {
 object GuardTestFeature1 extends Feature {
 	val hook = GuardHook[String]("Test guards 1")
 	def name = "Guard Test Feature 1"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 	}
@@ -545,7 +545,7 @@ object GuardTestFeature1 extends Feature {
 object GuardTestFeature2 extends Feature {
 	val hook = GuardHook[String]("Test guards 2")
 	def name = "Guard Test Feature 2"
-	def require = Nil
+	def depend = Nil
 	
 	def init(implicit builder: PluginContextBuilder) {
 		hook.register(m => m == "foo")
