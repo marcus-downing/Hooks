@@ -6,6 +6,8 @@ Hooks is a simple Scala library for handling plugins.
 * No configuration files or database
 * No classloaders, code injection, attributes or other tricks
 
+Proceed to [Getting Started](Getting Started) to learn more.
+
 ## How to use it
 1. Create a hook:
 
@@ -19,21 +21,19 @@ Hooks is a simple Scala library for handling plugins.
           }
         }
 
-3. Register your plugin with the repository
+3. Register your plugin with the repository:
 
         PluginRepository.register(ButtonLogger)
 
-4. Make a context with the currently desired plugins
+4. Make a context with the desired plugins:
 
         val optionalFeatures = PluginRepository.optionalFeatures
-        // ...choose active features...
+        // ...choose some features...
         implicit val context = PluginRepository.makeContext(chosenFeatures)
 
 5. In the appropriate place in client code, trigger that hook:
 
-        def onClick(button: Button){
-          buttonClicked(button)
-        }
+        buttonClicked(button)
 
 ## Read more
 - **Start here:** [Overview](Hooks/wiki/Overview) &rarr;
