@@ -15,7 +15,7 @@ trait PluginContext {
 	def get[S](hook: Hook[S]): List[S]
 }
 
-class PluginContextAdapter(inner: PluginContext) extends PluginContext {
+class PluginContextAdaptor(inner: PluginContext) extends PluginContext {
 	def features = inner.features
 	def plugins = inner.plugins
 	def hasRegistered[S](hook: Hook[S]) = inner.hasRegistered(hook)

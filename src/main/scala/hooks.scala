@@ -35,9 +35,9 @@ object ActionHook {
 class SimpleActionHook(name: String) extends Hook[(PluginContext) => Unit](name) {
 	def registerAction(f: (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
 	def register(f: (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: => Unit)(implicit c: PluginContextBuilder) = c.register(this, new Adapter(f).act _)
+	def register(f: => Unit)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor(f).act _)
 	
-	class Adapter(f: => Unit) { def act(c: PluginContext) = f }
+	class Adaptor(f: => Unit) { def act(c: PluginContext) = f }
 	
 	def actions(implicit c: PluginContext) = get
 	def apply()(implicit c: PluginContext) { for (action <- actions) action(c) }
@@ -45,10 +45,10 @@ class SimpleActionHook(name: String) extends Hook[(PluginContext) => Unit](name)
 
 class ActionHook[S](name: String) extends Hook[(S) => (PluginContext) => Unit](name) {
 	def registerAction(f: (S) => (PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, f)
-	def register(f: (S, PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).filter _)
-	def register(f: (S) => Unit)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).filter _)
-	class Adapter1(f: (S, PluginContext) => Unit) { def filter(s: S)(c: PluginContext) = f(s, c) }
-	class Adapter2(f: (S) => Unit) { def filter(s: S)(c: PluginContext) = f(s) }
+	def register(f: (S, PluginContext) => Unit)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor1(f).filter _)
+	def register(f: (S) => Unit)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor2(f).filter _)
+	class Adaptor1(f: (S, PluginContext) => Unit) { def filter(s: S)(c: PluginContext) = f(s, c) }
+	class Adaptor2(f: (S) => Unit) { def filter(s: S)(c: PluginContext) = f(s) }
 	
 	def actions(implicit c: PluginContext) = get
 	def apply(s: S)(implicit c: PluginContext) { for (action <- actions) action(s)(c) }
@@ -63,11 +63,11 @@ object FilterHook {
 class SimpleFilterHook[V](name: String) extends Hook[(V) => (PluginContext) => V](name) {
 	def registerFilter(f: (V) => (PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, f)
 	
-	def register(f: (V, PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter1(f).filter _)
-	def register(f: (V) => V)(implicit c: PluginContextBuilder) = c.register(this, Adapter2(f).filter _)
+	def register(f: (V, PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, Adaptor1(f).filter _)
+	def register(f: (V) => V)(implicit c: PluginContextBuilder) = c.register(this, Adaptor2(f).filter _)
 	
-	case class Adapter1(f: (V, PluginContext) => V) { def filter(v: V)(c: PluginContext) = f(v, c) }
-	case class Adapter2(f: (V) => V) { def filter(v: V)(c: PluginContext) = f(v) }
+	case class Adaptor1(f: (V, PluginContext) => V) { def filter(v: V)(c: PluginContext) = f(v, c) }
+	case class Adaptor2(f: (V) => V) { def filter(v: V)(c: PluginContext) = f(v) }
 	
 	def filters(implicit c: PluginContext) = get
 	def apply(value: V)(implicit c: PluginContext): V = {
@@ -80,13 +80,13 @@ class SimpleFilterHook[V](name: String) extends Hook[(V) => (PluginContext) => V
 class FilterHook[V, S](name: String) extends Hook[(V) => (S) => (PluginContext) => V](name) {
 	def registerFilter(f: (V) => (S) => (PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, f)
 	
-	def register(f: (V, S, PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).filter _)
-	def register(f: (V, S) => V)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).filter _)
-	def register(f: (V) => V)(implicit c: PluginContextBuilder) = c.register(this, new Adapter3(f).filter _)
+	def register(f: (V, S, PluginContext) => V)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor1(f).filter _)
+	def register(f: (V, S) => V)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor2(f).filter _)
+	def register(f: (V) => V)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor3(f).filter _)
 	
-	class Adapter1(f: (V, S, PluginContext) =>V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,s,c) }
-	class Adapter2(f: (V, S) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,s) }
-	class Adapter3(f: (V) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v) }
+	class Adaptor1(f: (V, S, PluginContext) =>V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,s,c) }
+	class Adaptor2(f: (V, S) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v,s) }
+	class Adaptor3(f: (V) => V) { def filter(v: V)(s: S)(c: PluginContext) = f(v) }
 
 	def filters(implicit c: PluginContext) = get
 	def apply(value: V)(extra: S)(implicit c: PluginContext): V =
@@ -122,14 +122,14 @@ class BufferHook[T](name: String, prefix: String, infix: String, affix: String, 
 	val earlyFilters = FilterHook[T](name+" (early filter)")
 	val lateFilters = FilterHook[String](name+" (late filter)")
 
-	def registerFragment(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).render _)
-	def add(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).render _)
-	def add(f: => T)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).render _)
-	def add(nested: BufferHook[_])(implicit c: PluginContextBuilder) = c.register(this, new NestAdapter(nested).render _)
+	def registerFragment(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor1(f).render _)
+	def add(f: (PluginContext) => T)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor1(f).render _)
+	def add(f: => T)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor2(f).render _)
+	def add(nested: BufferHook[_])(implicit c: PluginContextBuilder) = c.register(this, new NestAdaptor(nested).render _)
 	
-	class Adapter1(f: (PluginContext) => T) { def render(c: PluginContext): String = fix(earlyFilters(f(c))(c)) }
-	class Adapter2(f: => T) { def render(c: PluginContext): String = fix(earlyFilters(f)(c)) }
-	class NestAdapter(nested: BufferHook[_]) { def render(c: PluginContext): String = nested()(c) }
+	class Adaptor1(f: (PluginContext) => T) { def render(c: PluginContext): String = fix(earlyFilters(f(c))(c)) }
+	class Adaptor2(f: => T) { def render(c: PluginContext): String = fix(earlyFilters(f)(c)) }
+	class NestAdaptor(nested: BufferHook[_]) { def render(c: PluginContext): String = nested()(c) }
 	
 	def fragments(implicit c: PluginContext) = get
 	def apply()(implicit c: PluginContext) = {
@@ -149,11 +149,11 @@ object GuardHook {
 
 class SimpleGuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Boolean](name) {
   def registerGuard(f: (T) => (PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, f)
-  def register(f: (T, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).guard _)
-  def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).guard _)
+  def register(f: (T, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor1(f).guard _)
+  def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor2(f).guard _)
   
-  class Adapter1(f: (T, PluginContext) => Boolean) { def guard(v: T)(c: PluginContext) = f(v,c) }
-  class Adapter2(f: (T) => Boolean) { def guard(v: T)(c: PluginContext) = f(v) }
+  class Adaptor1(f: (T, PluginContext) => Boolean) { def guard(v: T)(c: PluginContext) = f(v,c) }
+  class Adaptor2(f: (T) => Boolean) { def guard(v: T)(c: PluginContext) = f(v) }
   
   def guards(implicit c: PluginContext) = get
   def apply(value: T)(implicit c: PluginContext): Boolean = {
@@ -164,13 +164,13 @@ class SimpleGuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Bo
 
 class GuardHook[T, S](name: String) extends Hook[(T) => (S) => (PluginContext) => Boolean](name) {
   def registerGuard(f: (T) => (S) => (PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, f)
-  def register(f: (T, S, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter1(f).guard _)
-  def register(f: (T, S) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter2(f).guard _)
-  def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adapter3(f).guard _)
+  def register(f: (T, S, PluginContext) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor1(f).guard _)
+  def register(f: (T, S) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor2(f).guard _)
+  def register(f: (T) => Boolean)(implicit c: PluginContextBuilder) = c.register(this, new Adaptor3(f).guard _)
   
-  class Adapter1(f: (T, S, PluginContext) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v,s,c) }
-  class Adapter2(f: (T, S) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v,s) }
-  class Adapter3(f: (T) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v) }
+  class Adaptor1(f: (T, S, PluginContext) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v,s,c) }
+  class Adaptor2(f: (T, S) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v,s) }
+  class Adaptor3(f: (T) => Boolean) { def guard(v: T)(s: S)(c: PluginContext) = f(v) }
   
   def guards(implicit c: PluginContext) = get
   def apply(value: T)(extra: S)(implicit c: PluginContext): Boolean = {
@@ -195,11 +195,11 @@ class StandaloneGuardHook[T, S](name: String) {
   val guards = new ListBuffer[(T) => (S) => Boolean]()
   
   def registerGuard(f: (T) => (S) => Boolean) = guards += f
-  def register(f: (T, S) => Boolean) = guards += new Adapter1(f).guard _
-  def register(f: (T) => Boolean) = guards += new Adapter2(f).guard _
+  def register(f: (T, S) => Boolean) = guards += new Adaptor1(f).guard _
+  def register(f: (T) => Boolean) = guards += new Adaptor2(f).guard _
   
-  class Adapter1(f: (T, S) => Boolean) { def guard(t: T)(s: S) = f(t, s) }
-  class Adapter2(f: (T) => Boolean) { def guard(t: T)(s: S) = f(t) }
+  class Adaptor1(f: (T, S) => Boolean) { def guard(t: T)(s: S) = f(t, s) }
+  class Adaptor2(f: (T) => Boolean) { def guard(t: T)(s: S) = f(t) }
   
   def apply(value: T)(extra: S): Boolean = {
     val guards = this.guards
