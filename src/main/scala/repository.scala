@@ -25,37 +25,46 @@ trait Logging {
 }
  
 trait PluginRepository {
-	def registeredFeatures: Seq[Feature]
-	def requiredFeatures: Seq[Feature]
-	def optionalFeatures: Seq[Feature]
+	def features: List[Feature]
+	def requiredFeatures: List[Feature]
+	def optionalFeatures: List[Feature] = features.diff(requiredFeatures)
 	
 	def register(features: Feature*)
 	def require(features: Feature*)
 	
-	def isEmpty: Boolean
-	def hasFeature(feature: Feature): Boolean
-	def isRequired(feature: Feature): Boolean
+	def isEmpty = features.isEmpty
+	def hasFeature(feature: Feature) = features.contains(feature)
+	def hasFeatures(features: Feature*) = features.forall(f => hasFeature(f))
+	def isRequired(features: Feature*) = features.forall(f => requiredFeatures.contains(f))
 	
 	def makeContext(desiredFeatures: List[Feature]): PluginContext
+	def makeContext(desiredFeatures: List[Feature], token: Any): PluginContext
 	
 	def copy = {
 		val copy = new PluginRepositoryImpl
+		copy.register(this.features: _*)
 		copy.require(this.requiredFeatures: _*)
-		copy.register(this.registeredFeatures: _*)
 		copy
 	}
 }
 
 class PluginRepositoryImpl extends PluginRepository with Logging {
-	val registeredFeatures = ListBuffer[Feature]()
-	val requiredFeatures = ListBuffer[Feature]()
-	def optionalFeatures = registeredFeatures.diff(requiredFeatures).toList
-	def register(features: Feature*) { registeredFeatures.appendAll(features) }
-	def require(features: Feature*) { requiredFeatures.appendAll(features) }
+	val _registeredFeatures = ListBuffer[Feature]()
+	val _requiredFeatures = ListBuffer[Feature]()
+	def features = _registeredFeatures.toList
+	def requiredFeatures = _requiredFeatures.toList
+
+	def register(features: Feature*) {
+	  _registeredFeatures.appendAll(features.diff(_registeredFeatures))
+	}
+	def require(features: Feature*) {
+	  register(features: _*)
+	  _requiredFeatures.appendAll(features.diff(_requiredFeatures))
+	}
 	
-	def isEmpty: Boolean = registeredFeatures.isEmpty
-	def hasFeature(feature: Feature) = registeredFeatures.contains(feature)
-	def isRequired(feature: Feature) = requiredFeatures.contains(feature)
+	//def isEmpty: Boolean = registeredFeatures.isEmpty
+	//def hasFeature(feature: Feature) = registeredFeatures.contains(feature)
+	//def isRequired(feature: Feature) = requiredFeatures.contains(feature)
 	
 	val securityGuard = GuardHook.standalone[Plugin, Option[Any]]("Repository guard")
 	
@@ -152,36 +161,29 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 }
 
 class SynchronizedPluginRepository(val inner: PluginRepositoryImpl) extends PluginRepository {
-	def registeredFeatures: Seq[Feature] = inner.synchronized { inner.registeredFeatures }
-	def requiredFeatures: Seq[Feature] = inner.synchronized { inner.requiredFeatures }
-	def optionalFeatures: Seq[Feature] = inner.synchronized { inner.optionalFeatures }
+	def features = inner.synchronized { inner.features }
+	def requiredFeatures = inner.synchronized { inner.requiredFeatures }
 	
 	def register(features: Feature*) { inner.synchronized { inner.register(features: _*) } }
 	def require(features: Feature*) { inner.synchronized { inner.require(features: _*) } }
 	
-	def isEmpty = inner.synchronized { inner.isEmpty }
-	def hasFeature(feature: Feature) = inner.synchronized { inner.hasFeature(feature) }
-	def isRequired(feature: Feature) = inner.synchronized { inner.isRequired(feature) }
-	
 	def makeContext(desiredFeatures: List[Feature]) =
 		inner.synchronized { inner.makeContext(desiredFeatures) }
+	def makeContext(desiredFeatures: List[Feature], token: Any) =
+		inner.synchronized { inner.makeContext(desiredFeatures, token) }
 }
 
 object PluginRepository extends PluginRepository {
 	val instance = new SynchronizedPluginRepository(new PluginRepositoryImpl)
 	def apply() = new PluginRepositoryImpl
 	
-	def registeredFeatures = instance.registeredFeatures
+	def features = instance.features
 	def requiredFeatures = instance.requiredFeatures
-	def optionalFeatures = instance.optionalFeatures
 	
 	def register(features: Feature*) { instance.register(features: _*) }
 	def require(features: Feature*) { instance.require(features: _*) }
 	
-	def isEmpty = instance.isEmpty
-	def hasFeature(feature: Feature) = instance.hasFeature(feature)
-	def isRequired(feature: Feature) = instance.isRequired(feature)
-	
 	def securityGuard = instance.inner.securityGuard
 	def makeContext(desiredFeatures: List[Feature]) = instance.makeContext(desiredFeatures)
+	def makeContext(desiredFeatures: List[Feature], token: Any) = instance.makeContext(desiredFeatures, token)
 }
