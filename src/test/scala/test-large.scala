@@ -245,7 +245,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
 
   object PluginNu extends Plugin {
     def name = "ν"
-    def depend = Nil
+    def depend = List(FeatureS, PluginAlpha, PluginZeta)
     def init(implicit c: PluginContextBuilder) { }
   }
 
@@ -257,19 +257,19 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
 
   object PluginOmicron extends Plugin {
     def name = "ο"
-    def depend = Nil
+    def depend = List(FeatureA, PluginGamma, PluginZeta)
     def init(implicit c: PluginContextBuilder) { }
   }
 
   object PluginPi extends Plugin {
     def name = "π"
-    def depend = Nil
+    def depend = List(FeatureP, PluginGamma, PluginDelta)
     def init(implicit c: PluginContextBuilder) { }
   }
 
   object PluginRho extends Plugin {
     def name = "ρ"
-    def depend = Nil
+    def depend = List(FeatureQ, PluginSigma, PluginKappa)
     def init(implicit c: PluginContextBuilder) { }
   }
 
@@ -311,21 +311,26 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
 
   object PluginOmega extends Plugin {
     def name = "ω"
-    def depend = Nil
+    def depend = List(FeatureK, PluginSigma, PluginAlpha)
     def init(implicit c: PluginContextBuilder) { }
   }
 
 
   //  Configuration
   val allFeatures = List(FeatureA, FeatureB, FeatureC, FeatureD, FeatureE, FeatureF,
-      FeatureG, FeatureH, FeatureI, FeatureJ, FeatureK, FeatureL, FeatureM,
-      FeatureN, FeatureO, FeatureP, FeatureQ, FeatureR, FeatureS, FeatureT,
-      FeatureU, FeatureV, FeatureW, FeatureX, FeatureY, FeatureZ)
+        FeatureG, FeatureH, FeatureI, FeatureJ, FeatureK, FeatureL, FeatureM,
+        FeatureN, FeatureO, FeatureP, FeatureQ, FeatureR, FeatureS, FeatureT,
+        FeatureU, FeatureV, FeatureW, FeatureX, FeatureY, FeatureZ)
   val reqFeatures = List(FeatureA, FeatureJ, FeatureR, FeatureZ)
   val desiredFeatures = List(FeatureD, FeatureK, FeatureT)
   val forbiddenFeatures = List(FeatureQ, FeatureU, FeatureX)
   
   val permittedFeatures = allFeatures.diff(forbiddenFeatures)
+  val expectedFeatures = List(FeatureA, FeatureD, FeatureJ, FeatureK, FeatureR,
+        FeatureT, FeatureZ, FeatureS)
+  val expectedPlugins = List(PluginAlpha, PluginDelta, PluginEpsilon, PluginZeta,
+        PluginTheta, PluginKappa, PluginLambda, PluginMu, PluginNu, PluginOmicron,
+        PluginPi, PluginOmega, PluginRho, PluginGamma, PluginPhi, PluginSigma)
     
   case class SecurityToken(forbidden: List[Plugin])
   def guardFunction(plugin: Plugin)(token: Option[Any]) = {
@@ -350,6 +355,8 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
       repo.register(allFeatures: _*)
 
       info(report(repo.features, "features"))
+      //for (f <- allFeatures)
+      //  repo should have ('feature
       assert(repo.hasFeatures(allFeatures: _*))
     }
     
@@ -379,11 +386,17 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
       val context = repo.makeContext(desiredFeatures)
 
       info(report(context.features, "features"))
-      info(report(context.plugins, "plugins"))
+      info(report(context.plugins.diff(context.features), "plugins"))
       val req = reqFeatures.diff(forbiddenFeatures)
       val des = desiredFeatures.diff(forbiddenFeatures)
       assert(req.forall(f => context.hasFeature(f)))
       assert(des.forall(f => context.hasFeature(f)))
+      
+      assert(expectedFeatures.forall(f => context.hasFeature(f)))
+      assert(expectedPlugins.forall(p => context.hasPlugin(p)))
+      
+      
+      //context.plugins.length must equal(expectedFeatures.length + expectedPlugins.length)
     }
   }
  

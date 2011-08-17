@@ -156,7 +156,8 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 		val registry: Map[Hook[_], List[_]] = 
 			builder.registry.toMap.mapValues(_.toList)
 
-		new PluginContextImpl(features, plugins, registry)
+    val finalFeatures: List[Feature] = plugins.collect { case f: Feature => f }
+		new PluginContextImpl(finalFeatures, plugins, registry)
 	}
 }
 
