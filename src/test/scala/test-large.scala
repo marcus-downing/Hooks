@@ -314,6 +314,20 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
     def depend = List(FeatureK, PluginSigma, PluginAlpha)
     def init(implicit c: PluginContextBuilder) { }
   }
+  
+  
+  //  Test Hooks
+  
+  val actionHookKA = ActionHook("ka")
+  val actionHookKI = ActionHook[String]("ki")
+  val actionHookKU = ActionHook[(Int, Int)]("ku")
+  
+  val filterHookSA = FilterHook[String]("sa")
+  val filterHookSHI = FilterHook[Int]("shi")
+  val filterHookSU = FilterHook[Int, String]("su")
+  val filterHookSE = FilterHook[Int, 
+  
+  val bufferHookMA = BufferHook("ma")
 
 
   //  Configuration
