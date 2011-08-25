@@ -31,6 +31,7 @@ trait PluginRepository {
 	
 	def register(features: Feature*)
 	def require(features: Feature*)
+	def purge(preserve: Feature*)
 	
 	def isEmpty = features.isEmpty
 	def hasFeature(feature: Feature) = features.contains(feature)
@@ -60,6 +61,10 @@ class PluginRepositoryImpl extends PluginRepository with Logging {
 	def require(features: Feature*) {
 	  register(features: _*)
 	  _requiredFeatures.appendAll(features.diff(_requiredFeatures))
+	}
+	def purge(preserve: Feature*) {
+		val keep = (preserve.toList ::: _requiredFeatures.toList).distinct
+		
 	}
 	
 	//def isEmpty: Boolean = registeredFeatures.isEmpty
@@ -167,11 +172,14 @@ class SynchronizedPluginRepository(val inner: PluginRepositoryImpl) extends Plug
 	
 	def register(features: Feature*) { inner.synchronized { inner.register(features: _*) } }
 	def require(features: Feature*) { inner.synchronized { inner.require(features: _*) } }
+	def purge(preserve: Feature*) { inner.synchronized { inner.purge(preserve: _*) } }
 	
 	def makeContext(desiredFeatures: List[Feature]) =
 		inner.synchronized { inner.makeContext(desiredFeatures) }
 	def makeContext(desiredFeatures: List[Feature], token: Any) =
 		inner.synchronized { inner.makeContext(desiredFeatures, token) }
+		
+	val securityGuard = inner.synchronized { inner.securityGuard.sync }
 }
 
 object PluginRepository extends PluginRepository {
@@ -183,6 +191,7 @@ object PluginRepository extends PluginRepository {
 	
 	def register(features: Feature*) { instance.register(features: _*) }
 	def require(features: Feature*) { instance.require(features: _*) }
+	def purge(preserve: Feature*) { instance.purge(preserve: _*) }
 	
 	def securityGuard = instance.inner.securityGuard
 	def makeContext(desiredFeatures: List[Feature]) = instance.makeContext(desiredFeatures)
