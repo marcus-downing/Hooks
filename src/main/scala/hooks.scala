@@ -205,6 +205,18 @@ class StandaloneGuardHook[T, S](name: String) {
     val guards = this.guards
     guards.isEmpty || guards.forall(g => g(value)(extra))
   }
+  
+  lazy val sync = new SynchronizedStandaloneGuardHook(this)
+}
+
+class SynchronizedStandaloneGuardHook[T, S](inner: StandaloneGuardHook[T, S]) {
+	def guards = inner.synchronized { inner.guards.toList }
+	
+	def registerGuard(f: (T) => (S) => Boolean) = inner.synchronized { inner.registerGuard(f) }
+	def register(f: (T, S) => Boolean) = inner.synchronized { inner.register(f) }
+	def register(f: (T) => Boolean) = inner.synchronized { inner.register(f) }
+	
+	def apply(value: T)(extra: S) = inner.synchronized { inner.apply(value)(extra) }
 }
 
 
