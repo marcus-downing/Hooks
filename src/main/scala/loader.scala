@@ -1,17 +1,20 @@
 package hooks
 
-
 import org.clapper.classutil._
 import java.io.File
 
 object FeatureLoader extends Logging {
-	def getFeatures(directory: File): List[Feature] = getFeatures(List(directory))
-	def getFeatures(classpath: List[File]): List[Feature] = getFeatures(ClassFinder(classpath))
+	def apply(classpath: File*) = new FeatureLoader(classpath.toList)
 
-	def getFeatures(finder: ClassFinder): List[Feature] = {
-		val classes = finder.getClasses
-		val featureClasses = ClassFinder.concreteSubclasses("hooks.Feature", classes)
-		featureClasses.flatMap { c => loadFeature(c) }
+}
+
+class FeatureLoader(classpath: List[File]) {
+	val finder = ClassFinder(classpath)
+	val classMap = ClassFinder.classInfoMap(finder.getClasses)
+
+	def getFeatures: List[Feature] = {
+		val featureClasses = ClassFinder.concreteSubclasses("hooks.Feature", classMap)
+		featureClasses.toList.flatMap { case c: ClassInfo => loadFeature(c) }
 	}
 	
 	def loadFeature(classInfo: ClassInfo): Option[Feature] = {
@@ -22,11 +25,12 @@ object FeatureLoader extends Logging {
 				val feature = cls.getField("MODULE$").get(cls).asInstanceOf[Feature]
 				Option(feature)
 			} catch {
-				case x => log(x.toString); None // error means no cookie
+				case x => //log(x.toString); 
+					None // error means no cookie
 			}
 		} else None // it's not a singleton?
 	}
 	
-	def registerFeatures(classpath: List[File], repo: PluginRepository) =
-		repo.register(getFeatures(classpath): _*)
+	def registerFeatures(repo: PluginRepository) =
+		repo.register(getFeatures: _*)
 }

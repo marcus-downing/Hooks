@@ -13,13 +13,14 @@ import scala.collection.mutable.{HashMap, ListBuffer}
  */
 
 object Logging {
-	var logging = false
+  val log = ActionHook.standalone[String]("Hook log")
+	def logToPrint: Unit = {
+	  log.register(f => println(f))
+	}
 }
  
 trait Logging {
-	def log(f: => String) {
-		if (Logging.logging) println(f)
-	}
+  val log = Logging.log
 	implicit def richPluginList(plugins: List[Plugin]) = new { def l = plugins.map(_.name).mkString(", ") }
 	implicit def richEdgeList(edges: List[(Plugin, Plugin)]) = new { def l = edges.map(e => e._1.name+" -> "+e._2.name) }
 }

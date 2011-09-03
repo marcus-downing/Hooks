@@ -30,6 +30,19 @@ object ActionHook {
 	def apply(name: String) = new SimpleActionHook(name)
 	def simple(name: String) = new SimpleActionHook(name)
 	def apply[S](name: String) = new ActionHook[S](name)
+	def standalone[S](name: String) = new StandaloneActionHook[S](name)
+}
+
+class StandaloneActionHook[S](name: String) extends Hook[(S) => Unit](name) {
+  val actions = new ListBuffer[(S) => Unit]()
+
+  def registerAction(f: (S) => Unit) = actions += f
+  def register(f: (S) => Unit) = actions += f
+  
+  def apply(value: S): Unit = {
+    for (action <- this.actions)
+      action(value)
+  }
 }
 
 class SimpleActionHook(name: String) extends Hook[(PluginContext) => Unit](name) {

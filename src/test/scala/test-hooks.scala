@@ -1,3 +1,5 @@
+package hooks.test
+
 import org.scalatest.Spec
 
 import hooks._
