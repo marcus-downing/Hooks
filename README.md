@@ -9,39 +9,39 @@
 ## How to use it
 1. Create a hook:
 
-```scala
-val buttonClicked = new ActionHook[Button]("Button Clicked")
-```
+    ```scala
+    val buttonClicked = new ActionHook[Button]("Button Clicked")
+    ```
 
 2. Create a plugin that attaches a callback to that hook:
 
-```scala
-object ButtonLogger extends Feature {
-  def init (implicit val build: PluginContextBuilder) {
-    buttonClicked.register(button => println("Somebody clicked "+button.name))
-  }
-}
-```
+    ```scala
+    object ButtonLogger extends Feature {
+      def init (implicit val build: PluginContextBuilder) {
+        buttonClicked.register(button => println("Somebody clicked "+button.name))
+      }
+    }
+    ```
 
 3. Register your plugin with the repository:
 
-```scala
-PluginRepository.register(ButtonLogger)
-```
+    ```scala
+    PluginRepository.register(ButtonLogger)
+    ```
 
 4. Make a context with the desired plugins:
 
-```scala
-val optionalFeatures = PluginRepository.optionalFeatures
-// ...choose some features...
-implicit val context = PluginRepository.makeContext(chosenFeatures)
-```
+    ```scala
+    val optionalFeatures = PluginRepository.optionalFeatures
+    // ...choose some features...
+    implicit val context = PluginRepository.makeContext(chosenFeatures)
+    ```
 
 5. In the appropriate place in client code, trigger that hook:
 
-```scala
-buttonClicked(button)
-```
+    ```scala
+    buttonClicked(button)
+    ```
 
 ## Read more
 - **Start here: [Overview](Hooks/wiki/Overview) &rarr;**
