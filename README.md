@@ -1,4 +1,4 @@
-**Hooks** is a simple Scala library for handling plugins.
+**Hooks** is a simple Scala library for handling plugins and modular functionality.
 
 * Self-contained library that can be used with any framework or platform
 * Straightforward API
