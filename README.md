@@ -44,12 +44,12 @@
     ```
 
 ## Read more
-- **Start here: [Overview](Hooks/wiki/Overview) &rarr;**
+- **Start here: [Overview](https://github.com/marcusatbang/Hooks/wiki/Overview) &rarr;**
 
-- [Getting Started](Hooks/wiki/Getting Started)
+- [Getting Started](https://github.com/marcusatbang/Hooks/wiki/Getting Started)
 
-- [Advanced User Guide](Hooks/wiki/Advanced User Guide)
+- [Advanced User Guide](https://github.com/marcusatbang/Hooks/wiki/Advanced User Guide)
 
-- [Security](Hooks/wiki/Security)
+- [Security](https://github.com/marcusatbang/Hooks/wiki/Security)
 
-- [Examples](Hooks/wiki/Examples)
+- [Examples](https://github.com/marcusatbang/Hooks/wiki/Examples)
