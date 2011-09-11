@@ -109,17 +109,50 @@ class FilterHook[V, S](name: String) extends Hook[(V) => (S) => (PluginContext) 
 }
 
 
-//  A hook that selects just one object
-abstract class SelectableHook[T](name: String)(selector: (List[T], PluginContext) => Option[T]) extends Hook[T](name) {
-	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
+//  A hook that selects just one of the registered objects
+object SelectableHook {
+	def apply[T](name: String)(selector: (List[T], PluginContext) => Option[T]) = new SimpleSelectableHook(name)(selector)
+	def apply[T, S](name: String)(selector: (List[T], S, PluginContext) => Option[T]) = new SelectableHook(name)(selector)
+	def standalone[T](name: String)(selector: (List[T]) => Option[T]) = new SimpleStandaloneSelectableHook(name)(selector)
+	def standalone[T, S](name: String)(selector: (List[T], S) => Option[T]) = new StandaloneSelectableHook(name)(selector)
+}
 
-	def selectValue(values: List[T])(implicit c: PluginContext): Option[T]
-	def select(implicit c: PluginContext) = selectValue(get)
-	def apply()(implicit c: PluginContext) = select
+class SimpleSelectableHook[T](name: String)(selector: (List[T], PluginContext) => Option[T]) extends Hook[T](name) {
+	val guard = GuardHook.standalone[T](name+" (guard)")
+	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
+	
+	def items(implicit c: PluginContext): List[T] = guard(get).toList
+	def apply()(implicit c: PluginContext) = selector(items, c)
+}
+
+class SelectableHook[T, S](name: String)(selector: (List[T], S, PluginContext) => Option[T]) extends Hook[T](name) {
+	val guard = GuardHook.standalone[T, S](name+" (guard)")
+	def register(t: T)(implicit c: PluginContextBuilder) = c.register(this, t)
+	
+	def items(extra: S)(implicit c: PluginContext): List[T] = guard(get)(extra).toList
+	def apply(extra: S)(implicit c: PluginContext) = selector(items(extra), extra, c)
+}
+
+class SimpleStandaloneSelectableHook[T](name: String)(selector: (List[T]) => Option[T]) extends Hook[T](name) {
+	private val _items = new ListBuffer[T]()
+	val guard = GuardHook.standalone[T](name+" (guard)")
+	def register(t: T) = _items += t
+
+	def items: List[T] = guard(_items).toList
+	def apply() = selector(items)
+}
+
+class StandaloneSelectableHook[T, S](name: String)(selector: (List[T], S) => Option[T]) extends Hook[T](name) {
+	private val _items = new ListBuffer[T]()
+	val guard = GuardHook.standalone[T, S](name+" (guard)")
+	def register(t: T) = _items += t
+
+	def items(extra: S): List[T] = guard(_items.toList)(extra).toList
+	def apply(extra: S) = selector(items(extra), extra)
 }
 
 
-//  A hook that collects string fragments and assembles them
+//  A hook that collects fragments and assembles them into one string
 object BufferHook {
 	def strid(v: String) = v
 	def apply(name: String, prefix: String, infix: String, affix: String) = new BufferHook[String](name, prefix, infix, affix, strid)
@@ -173,6 +206,9 @@ class SimpleGuardHook[T](name: String) extends Hook[(T) => (PluginContext) => Bo
     val guards = this.guards
     guards.isEmpty || guards.forall(g => g(value)(c))
   }
+  def apply(values: Seq[T])(implicit c: PluginContext): Seq[T] = values.filter(v => this(v))
+  def apply(values: Option[T])(implicit c: PluginContext): Option[T] = values.filter(v => this(v))
+  def apply(values: List[T])(implicit c: PluginContext): List[T] = values.filter(v => this(v))
 }
 
 class GuardHook[T, S](name: String) extends Hook[(T) => (S) => (PluginContext) => Boolean](name) {
@@ -190,6 +226,9 @@ class GuardHook[T, S](name: String) extends Hook[(T) => (S) => (PluginContext) =
     val guards = this.guards
     guards.isEmpty || guards.forall(g => g(value)(extra)(c))
   }
+  def apply(values: Seq[T])(extra: S)(implicit c: PluginContext): Seq[T] = values.filter(v => this(v)(extra))
+  def apply(values: Option[T])(extra: S)(implicit c: PluginContext): Option[T] = values.filter(v => this(v)(extra))
+  def apply(values: List[T])(extra: S)(implicit c: PluginContext): List[T] = values.filter(v => this(v)(extra))
 }
 
 class SimpleStandaloneGuardHook[T](name: String) {
@@ -202,6 +241,9 @@ class SimpleStandaloneGuardHook[T](name: String) {
     val guards = this.guards
     guards.isEmpty || guards.forall(g => g(value))
   }
+  def apply(values: Seq[T]): Seq[T] = values.filter(v => this(v))
+  def apply(values: Option[T]): Option[T] = values.filter(v => this(v))
+  def apply(values: List[T]): List[T] = values.filter(v => this(v))
 }
 
 class StandaloneGuardHook[T, S](name: String) {
@@ -218,18 +260,24 @@ class StandaloneGuardHook[T, S](name: String) {
     val guards = this.guards
     guards.isEmpty || guards.forall(g => g(value)(extra))
   }
+  def apply(values: Seq[T])(extra: S): Seq[T] = values.filter(v => this(v)(extra))
+  def apply(values: Option[T])(extra: S): Option[T] = values.filter(v => this(v)(extra))
+  def apply(values: List[T])(extra: S): List[T] = values.filter(v => this(v)(extra))
   
   lazy val sync = new SynchronizedStandaloneGuardHook(this)
 }
 
 class SynchronizedStandaloneGuardHook[T, S](inner: StandaloneGuardHook[T, S]) {
-	def guards = inner.synchronized { inner.guards.toList }
+  def guards = inner.synchronized { inner.guards.toList }
 	
-	def registerGuard(f: (T) => (S) => Boolean) = inner.synchronized { inner.registerGuard(f) }
-	def register(f: (T, S) => Boolean) = inner.synchronized { inner.register(f) }
-	def register(f: (T) => Boolean) = inner.synchronized { inner.register(f) }
+  def registerGuard(f: (T) => (S) => Boolean) = inner.synchronized { inner.registerGuard(f) }
+  def register(f: (T, S) => Boolean) = inner.synchronized { inner.register(f) }
+  def register(f: (T) => Boolean) = inner.synchronized { inner.register(f) }
 	
-	def apply(value: T)(extra: S) = inner.synchronized { inner.apply(value)(extra) }
+  def apply(value: T)(extra: S) = inner.synchronized { inner.apply(value)(extra) }
+  def apply(values: Seq[T])(extra: S): Seq[T] = values.filter(v => this(v)(extra))
+  def apply(values: Option[T])(extra: S): Option[T] = values.filter(v => this(v)(extra))
+  def apply(values: List[T])(extra: S): List[T] = values.filter(v => this(v)(extra))
 }
 
 
