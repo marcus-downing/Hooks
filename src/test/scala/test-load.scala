@@ -31,8 +31,8 @@ class LoadSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
 
   feature("A codebase") {
     scenario("auto-load plugins") {
-      val file = new File("target/scala-2.8.1.final/test-classes")
-	  val file2 = new File("target/scala-2.8.1.final/classes")
+      val file = new File("target/scala-2.9.0.final/test-classes")
+	  val file2 = new File("target/scala-2.0.0.final/classes")
       //info(file.getAbsolutePath)
       val finder = ClassFinder(List(file, file2))
       
