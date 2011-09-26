@@ -14,7 +14,7 @@ class HookSpec extends Spec {
 				repo.require(ComponentTestFeature)
 				implicit val context = repo.makeContext(Nil)
 				
-				val strings = ComponentTestFeature.hook.get
+				val strings = ComponentTestFeature.hook._get
 				assert(strings.contains("Foo") && strings.contains("Bar") && strings.length == 2)
 			}
 		}
