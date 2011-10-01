@@ -194,7 +194,7 @@ class RepoSpec extends Spec {
 
 object TestFeature extends Feature {
 	def name = "Test Feature"
-	def depend = Nil
+	override def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
@@ -202,19 +202,19 @@ object TestFeature extends Feature {
 
 object TestFeature2 extends Feature {
 	def name = "Test Feature 2"
-	def depend = List(TestPlugin2A, TestPlugin2B)
+	override def depend = List(TestPlugin2A, TestPlugin2B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin2A extends Plugin {
 	def name = "Test Plugin 2A"
-	def depend = Nil
+	override def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin2B extends Plugin {
 	def name = "Test Plugin 2B"
-	def depend = Nil
+	override def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
@@ -222,20 +222,20 @@ object TestPlugin2B extends Plugin {
 
 object TestFeature3 extends Feature {
 	def name = "Test Feature 3"
-	def depend = List(TestPlugin3A, TestPlugin3B)
+	override def depend = List(TestPlugin3A, TestPlugin3B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin3A extends Plugin {
 	def name = "Test Plugin 3A"
-	def depend = Nil
+	override def depend = Nil
 	override def before = List(TestPlugin3B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin3B extends Plugin {
 	def name = "Test Plugin 3B"
-	def depend = Nil
+	override def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
@@ -243,19 +243,19 @@ object TestPlugin3B extends Plugin {
 
 object TestFeature4 extends Feature {
 	def name = "Test Feature 4"
-	def depend = List(TestPlugin4A, TestPlugin4B)
+	override def depend = List(TestPlugin4A, TestPlugin4B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin4A extends Plugin {
 	def name = "Test Plugin 4A"
-	def depend = Nil
+	override def depend = Nil
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin4B extends Plugin {
 	def name = "Test Plugin 4B"
-	def depend = Nil
+	override def depend = Nil
 	override def after = List(TestPlugin4A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
@@ -264,20 +264,20 @@ object TestPlugin4B extends Plugin {
 
 object TestFeature5 extends Feature {
 	def name = "Test Feature 5"
-	def depend = List(TestPlugin5A, TestPlugin5B)
+	override def depend = List(TestPlugin5A, TestPlugin5B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin5A extends Plugin {
 	def name = "Test Plugin 5A"
-	def depend = Nil
+	override def depend = Nil
 	override def after = List(TestPlugin5B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin5B extends Plugin {
 	def name = "Test Plugin 5B"
-	def depend = Nil
+	override def depend = Nil
 	override def after = List(TestPlugin5A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
@@ -286,13 +286,13 @@ object TestPlugin5B extends Plugin {
 
 object TestFeature6 extends Feature {
 	def name = "Test Feature 6"
-	def depend = List(TestPlugin6)
+	override def depend = List(TestPlugin6)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin6 extends Plugin {
 	def name = "Test Plugin 6"
-	def depend = Nil
+	override def depend = Nil
 	override def after = List(TestPlugin5A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
@@ -301,18 +301,18 @@ object TestPlugin6 extends Plugin {
 
 object TestFeature7 extends Feature {
 	def name = "Test Feature 7"
-	def depend = List(TestPlugin7A)
+	override def depend = List(TestPlugin7A)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin7A extends Plugin {
 	def name = "Test Plugin 7A"
-	def depend = List(TestPlugin7B)
+	override def depend = List(TestPlugin7B)
 	def init(implicit builder: PluginContextBuilder) { }
 }
 
 object TestPlugin7B extends Plugin {
 	def name = "Test Plugin 7B"
-	def depend = List(TestFeature7)
+	override def depend = List(TestFeature7)
 	def init(implicit builder: PluginContextBuilder) { }
 }
