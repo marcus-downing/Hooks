@@ -2,29 +2,27 @@ package hooks
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 
-object PluginContext {
-  def dummy = new PluginContextBuilderImpl(Nil, Nil)
-  val stack = new ResourceTracker[PluginContext, String]() // .sync
-  //implicit def stackContext = stack.get[PluginContext].getOrElse(dummy)
-  //implicit def stackBuilder = stack.get[PluginContextBuilder].getOrElse(dummy)
+object HookContext {
+  def dummy = new HookContextBuilderImpl(Nil)
+  val stack = new ResourceTracker[HookContext, String]() // .sync
+  //implicit def stackContext = stack.get[HookContext].getOrElse(dummy)
+  //implicit def stackBuilder = stack.get[ContextBuilder].getOrElse(dummy)
 }
 
-trait PluginContext {
-  def features: List[Feature]
-  def plugins: List[Plugin]
-  def hasFeature(feature: Feature) = features.contains(feature)
-  def hasPlugin(plugin: Plugin) = plugins.contains(plugin)
+trait HookContext {
+  def features: List[FeatureLike]
+  def hasFeature(feature: FeatureLike) = features.contains(feature)
   def hasRegistered[S](hook: Hook[S]): Boolean
   def get[S](hook: Hook[S]): List[S]
   
   //  mutations: local-variant contexts
-  //def stacked[R](f: => R) = PluginContext.stack.using(this)(f)
-  def mutate = new PluginContextMutant(new PluginContextBuilderImpl(Nil, Nil), this)
+  //def stacked[R](f: => R) = HookContext.stack.using(this)(f)
+  def mutate = new HookContextMutant(new HookContextBuilderImpl(Nil), this)
   
-  def local[R](f: (PluginContextBuilder) => R) = f(mutate)
+  def local[R](f: (ContextBuilder) => R) = f(mutate)
   //def localStacked[R](f: => R) = mutate.stacked(f)
   /*
-  def local[R](f: (PluginContextBuilder) => Unit)(g: (PluginContext) => R) = {
+  def local[R](f: (ContextBuilder) => Unit)(g: (HookContext) => R) = {
     val mutant = mutate
     f(mutant)
     val fixed = mutant.fix
@@ -38,7 +36,7 @@ trait PluginContext {
   }
   */
   /*
-  def local[C, R](f: (PluginContextBuilder) => C)(g: (C) => (PluginContext) => R) = {
+  def local[C, R](f: (ContextBuilder) => C)(g: (C) => (HookContext) => R) = {
     val mutant = mutate
     val carry: C = f(mutant)
     val fixed = mutant.fix
@@ -53,18 +51,17 @@ trait PluginContext {
   */
 }
 
-trait PluginContextBuilder extends PluginContext {
+trait ContextBuilder extends HookContext {
   def register[S](hook: Hook[S], value: S)
 }
 
-class PluginContextAdaptor(inner: PluginContext) extends PluginContext {
+class HookContextAdaptor(inner: HookContext) extends HookContext {
   def features = inner.features
-  def plugins = inner.plugins
   def hasRegistered[S](hook: Hook[S]) = inner.hasRegistered(hook)
   def get[S](hook: Hook[S]): List[S] = inner.get(hook)
 }
 
-class PluginContextBuilderImpl (val features: List[Feature], val plugins: List[Plugin]) extends PluginContextBuilder {
+class HookContextBuilderImpl (val features: List[FeatureLike]) extends ContextBuilder {
   val registry: HashMap[Hook[_], ListBuffer[_]] = HashMap()
   def getValues[S](hook: Hook[S]) = registry.get(hook).getOrElse(ListBuffer()).asInstanceOf[ListBuffer[S]]
   
@@ -77,29 +74,27 @@ class PluginContextBuilderImpl (val features: List[Feature], val plugins: List[P
   def get[S](hook: Hook[S]) = getValues(hook).toList
 }
 
-case class PluginContextImpl (
-    features: List[Feature],
-    plugins: List[Plugin],
+case class HookContextImpl (
+    features: List[FeatureLike],
     registry: Map[Hook[_], List[_]]
-  ) extends PluginContext {
+  ) extends HookContext {
   def hasRegistered[S](hook: Hook[S]) = !registry.get(hook).getOrElse(List()).isEmpty
   def get[S](hook: Hook[S]) = registry.get(hook).getOrElse(List()).map(_.asInstanceOf[S])
 }
 
-class PluginContextMutant (mutation: PluginContextBuilderImpl, base: PluginContext) extends PluginContextBuilder {
+class HookContextMutant (mutation: HookContextBuilderImpl, base: HookContext) extends ContextBuilder {
   def features = mutation.features ::: base.features
-  def plugins = mutation.plugins ::: base.plugins
   def register[S](hook: Hook[S], value: S) = mutation.register(hook, value)
   def hasRegistered[S](hook: Hook[S]) = mutation.hasRegistered(hook) || base.hasRegistered(hook)
   def get[S](hook: Hook[S]) = mutation.get(hook) ::: base.get(hook)
-  def fix: PluginContext = throw new UnsupportedOperationException
+  def fix: HookContext = throw new UnsupportedOperationException
   /*
-  def fix: PluginContext = {
+  def fix: HookContext = {
     val mutantRegistry: Map[Hook[_], List[_]] = mutation.registry.toMap.mapValues(_.toList)
     val combinedRegistry: Map[Hook[_], List[_]] = {
       ...
     }
-    new PluginContextImpl(features, plugins, combinedRegistry)
+    new HookContextImpl(features, combinedRegistry)
   }
   */
 }

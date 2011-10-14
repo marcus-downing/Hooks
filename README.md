@@ -1,8 +1,14 @@
 **Hooks** is a simple Scala library for handling plugins and modular functionality.
 
+* Create type-safe 'hooks' representing ways your code can be extended
+* Add behaviours to those hooks, from plugins or elsewhere
+* Apply those hooks to invoke plugin code
+
+Hooks has the following advantages:
+
 * Fits into any framework or platform
-* Straightforward API
-* Type-safe
+* Straightforward and extensible API
+* Scala's type safety ensures plugins behave themselves
 * No configuration files or database
 * No classloaders, code injection or other tricks
 
@@ -18,15 +24,19 @@ You can run the following commands in the Scala REPL.
 2. Create a hook:
 
     ```scala
-    val buttonClicked = new ActionHook[Button]("Button Clicked")
+    val nameFilter = FilterHook[String]("Name hook")
     ```
 
-3. Create a plugin that attaches a callback to that hook:
+3. Create a feature that attaches a callback to that hook:
 
     ```scala
-    object ButtonLogger extends Feature {
-      def init (implicit val build: PluginContextBuilder) {
-        buttonClicked.register(button => println("Somebody clicked "+button.name))
+    object MyFeature extends Feature {
+      def init (implicit val b: ContextBuilder) {
+        nameFilter.register { name =>
+          val words = name.split(" ").toList
+          val words2 = (name.last+",") :: name.init
+          words2.mkString(" ")
+        }
       }
     }
     ```
@@ -34,22 +44,25 @@ You can run the following commands in the Scala REPL.
 4. Register your plugin with the repository:
 
     ```scala
-    PluginRepository.register(ButtonLogger)
+    FeatureRepository.register(MyFeature)
     ```
 
-5. Make a context with the desired plugins:
+5. Make a context with the desired features:
 
     ```scala
-    val optionalFeatures = PluginRepository.optionalFeatures
+    val optionalFeatures = FeatureRepository.optionalFeatures
     // ...choose some features...
-    implicit val context = PluginRepository.makeContext(chosenFeatures)
+    implicit val context = FeatureRepository.makeContext(chosenFeatures)
     ```
 
 6. In the appropriate place in client code, trigger that hook:
 
     ```scala
-    buttonClicked(button)
+    val name = "John Smith"
+    val displayName = nameFilter(name)
     ```
+    
+    This should result in the string: ```Smith, John```.
 
 ## Introduction
 
@@ -61,8 +74,8 @@ A better solution is to make the code modular.
 
 The aim of **Hooks** is to handle, in as safe a manner as possible,
 the uncertainty of optional and modular features.
-It's inspired by the success of pluggable frameworks such as jQuery and WordPress,
-but adds to that Scala's immutability and type safety.
+It's inspired by the success of pluggable architectures like jQuery and WordPress,
+but adds a good dose of Scala's immutability and type safety.
 
 A `Hook` is a point at which your program can be extended.
 It connects code together, allowing some feature, resource or data
@@ -79,16 +92,16 @@ There are hooks for:
 
 - Selecting one component from a list ([`SelectableHook`](https://github.com/marcusatbang/Hooks/wiki/SelectableHook))
 
-- Tracking open resources ([`TrackerHook`](https://github.com/marcusatbang/Hooks/wiki/TrackerHook))
+- Tracking open resources ([`ResourceTrackerHook`](https://github.com/marcusatbang/Hooks/wiki/ResourceTrackerHook))
 
-- Building complex string expressions ([`BufferHook`](https://github.com/marcusatbang/Hooks/wiki/BufferHook))
+- Building complex expressions ([`BufferHook`](https://github.com/marcusatbang/Hooks/wiki/BufferHook))
 
 ...and more. You can also build your own hook classes.
 
 Each type of hook is typed to control the components registered with it and ensure their semantics.
 This lets you open up your program to plugins without worrying that each one could break it.
 
-**Hooks** provides tools to control the life cycle of plugins,
+**Hooks** provides tools to control the life cycle of plugins and features,
 but does not impose a specific structure on your code.
 It's simply a library that can be added to whatever framework your application uses.
 

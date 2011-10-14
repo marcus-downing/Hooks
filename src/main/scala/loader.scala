@@ -3,9 +3,8 @@ package hooks
 import org.clapper.classutil._
 import java.io.File
 
-object FeatureLoader extends Logging {
+object FeatureLoader {
   def apply(classpath: File*) = new FeatureLoader(classpath.toList)
-
 }
 
 class FeatureLoader(classpath: List[File]) {
@@ -31,6 +30,6 @@ class FeatureLoader(classpath: List[File]) {
     } else None // it's not a singleton?
   }
   
-  def registerFeatures(repo: PluginRepository) =
+  def registerFeatures(repo: FeatureRepository) =
     repo.register(getFeatures: _*)
 }

@@ -65,7 +65,7 @@ There's a version of ActionHook which doesn't require an event object. Create on
     val eventHandler = ActionHook("Event handler (without event object)")
     ```
 
-There's also a version which isn't dependent on a `PluginContext`. Create one with the `standalone` method:
+There's also a version which isn't dependent on a `HookContext`. Create one with the `standalone` method:
 
     ```scala
     val eventHandler = ActionHook.standalone[MyEventType]("Event handler (standalone)")

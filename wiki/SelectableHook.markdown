@@ -12,7 +12,7 @@ Create a selectable hook, passing in a selector:
 This selector should be a function to choose one of a list of versions:
 
     ```scala
-    def selectVersion(version: List[String], c: PluginContext): String = versions.sort.head
+    def selectVersion(version: List[String], c: HookContext): String = versions.sort.head
     ```
   
 Register a number of components:
@@ -51,7 +51,7 @@ You don't necessarily want to select the same item all the time; your choice may
 The selector function will then be passed this extra parameter:
 
     ```scala
-    def selectVersion(version: List[String], package: String, c: PluginContext): String = ...
+    def selectVersion(version: List[String], package: String, c: HookContext): String = ...
     ```
 
 The guard will also be passed the same information:

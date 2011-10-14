@@ -17,14 +17,14 @@ object LS {
   }
   
   def registerFeatures () {
-    PluginRepository.register(Verbose)
-    PluginRepository.register(LongFormat)
-    PluginRepository.register(ColourOutput)
-    PluginRepository.register(HumanUnits)
-    PluginRepository.register(SIUnits)
-    PluginRepository.register(AllFiles)
+    FeatureRepository.register(Verbose)
+    FeatureRepository.register(LongFormat)
+    FeatureRepository.register(ColourOutput)
+    FeatureRepository.register(HumanUnits)
+    FeatureRepository.register(SIUnits)
+    FeatureRepository.register(AllFiles)
     
-    PluginRepository.require(DefaultFeatures)
+    FeatureRepository.require(DefaultFeatures)
   }
   
   def parseArgs(args: Array[String]): List[Feature] = {
@@ -46,14 +46,14 @@ object LS {
   }
   
   def run(flags: List[Feature]) {
-    implicit val c: PluginContext = PluginRepository.makeContext(flags)
+    implicit val c: HookContext = FeatureRepository.makeContext(flags)
     
     begin()
     
     val dir = new File(path)
     println(dir.getAbsolutePath())
     
-    if (!PluginRepository.hasFeature(AllFiles))
+    if (!FeatureRepository.hasFeature(AllFiles))
       fileGuard.register(f => !f.getName().startsWith("."))
     
     //val files = fileGuard(dir.list())
@@ -74,7 +74,7 @@ object LS {
 
 object DefaultFeatures extends Feature {
   val name = "Default Features"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
     
   }
 }
@@ -82,42 +82,42 @@ object DefaultFeatures extends Feature {
 //  features
 object Verbose extends Feature {
   val name = "Verbose"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
     LS.first.register
   }
 }
 
 object All files extends Feature {
   val name = "All files"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
   
   }
 }
 
 object LongFormat extends Feature {
   val name = "Long format"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
   
   }
 }
 
 object ColourOutput extends Feature {
   val name = "Colour output"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
   
   }
 }
 
 object HumanUnits extends Feature {
   val name = "Human readable units"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
   
   }
 }
 
 object SIUnits extends Feature {
   val name = "SI units"
-  def init(implicit c: PluginContextBuilder) = {
+  def init(implicit c: HookContextBuilder) = {
   
   }
 }

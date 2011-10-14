@@ -7,321 +7,321 @@ import hooks._
 //  features
 object FeatureA extends Feature {
   val name = "A"
-  override def depend = List(FeatureP, PluginNu, PluginOmicron)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureP, FeatureNu, FeatureOmicron)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureB extends Feature {
   val name = "B"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureC extends Feature {
   val name = "C"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureD extends Feature {
   val name = "D"
-  override def depend = List(FeatureF, PluginAlpha, PluginKappa)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureF, FeatureAlpha, FeatureKappa)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureE extends Feature {
   val name = "E"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureF extends Feature {
   val name = "F"
-  override def depend = List(FeatureZ, PluginNu, PluginLambda)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureZ, FeatureNu, FeatureLambda)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureG extends Feature {
   val name = "G"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureH extends Feature {
   val name = "H"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureI extends Feature {
   val name = "I"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureJ extends Feature {
   val name = "J"
-  override def depend = List(FeatureR, PluginEpsilon, PluginZeta)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureR, FeatureEpsilon, FeatureZeta)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureK extends Feature {
   val name = "K"
-  override def depend = List(FeatureZ, PluginDelta, PluginOmicron)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureZ, FeatureDelta, FeatureOmicron)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureL extends Feature {
   val name = "L"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureM extends Feature {
   val name = "M"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureN extends Feature {
   val name = "N"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureO extends Feature {
   val name = "O"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureP extends Feature {
   val name = "P"
-  override def depend = List(FeatureF, PluginAlpha, PluginOmega)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureF, FeatureAlpha, FeatureOmega)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureQ extends Feature {
   val name = "Q"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureR extends Feature {
   val name = "R"
-  override def depend = List(FeatureZ, PluginPi, PluginKappa)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureZ, FeaturePi, FeatureKappa)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureS extends Feature {
   val name = "S"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureT extends Feature {
   val name = "T"
-  override def depend = List(FeatureV, PluginMu, PluginNu)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureV, FeatureMu, FeatureNu)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureU extends Feature {
   val name = "U"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureV extends Feature {
   val name = "V"
-  override def depend = List(FeatureP, PluginDelta, PluginTheta)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureP, FeatureDelta, FeatureTheta)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureW extends Feature {
   val name = "W"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureX extends Feature {
   val name = "X"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureY extends Feature {
   val name = "Y"
-  override def depend = Nil //List(Plugin1, Plugin2, Plugin3)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = Nil //List(Feature1, Feature2, Feature3)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object FeatureZ extends Feature {
   val name = "Z"
-  override def depend = List(FeatureJ, PluginOmicron, PluginOmega)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureJ, FeatureOmicron, FeatureOmega)
+  def init(implicit c: ContextBuilder) { }
 }
 
 object BadFeature extends Feature {
   def name = "Bad Feature"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) {
+  def init(implicit c: ContextBuilder) {
     throw new UnsupportedOperationException("Bad Feature! Should never reach this!")
   }
 }
 
-//  plugins
-object PluginAlpha extends Plugin {
+//  Features
+object FeatureAlpha extends Feature {
   def name = "α"
-  override def depend = List(FeatureK, PluginDelta, PluginOmega)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureK, FeatureDelta, FeatureOmega)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginBeta extends Plugin {
+object FeatureBeta extends Feature {
   def name = "β"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginGamma extends Plugin {
+object FeatureGamma extends Feature {
   def name = "γ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginDelta extends Plugin {
+object FeatureDelta extends Feature {
   def name = "δ"
-  override def depend = List(FeatureX, PluginLambda, PluginRho)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureX, FeatureLambda, FeatureRho)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginEpsilon extends Plugin {
+object FeatureEpsilon extends Feature {
   def name = "ε"
-  override def depend = List(FeatureZ, PluginGamma, PluginKappa)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureZ, FeatureGamma, FeatureKappa)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginZeta extends Plugin {
+object FeatureZeta extends Feature {
   def name = "ζ"
-  override def depend = List(FeatureQ, PluginTheta, PluginPhi)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureQ, FeatureTheta, FeaturePhi)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginEta extends Plugin {
+object FeatureEta extends Feature {
   def name = "η"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginTheta extends Plugin {
+object FeatureTheta extends Feature {
   def name = "θ"
-  override def depend = List(FeatureT, PluginPhi, PluginRho)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureT, FeaturePhi, FeatureRho)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginIota extends Plugin {
+object FeatureIota extends Feature {
   def name = "ι"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginKappa extends Plugin {
+object FeatureKappa extends Feature {
   def name = "κ"
-  override def depend = List(FeatureJ, PluginMu, PluginPi)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureJ, FeatureMu, FeaturePi)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginLambda extends Plugin {
+object FeatureLambda extends Feature {
   def name = "λ"
-  override def depend = List(FeatureQ, PluginGamma, PluginLambda)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureQ, FeatureGamma, FeatureLambda)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginMu extends Plugin {
+object FeatureMu extends Feature {
   def name = "μ"
-  override def depend = List(FeatureV, PluginRho, PluginAlpha)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureV, FeatureRho, FeatureAlpha)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginNu extends Plugin {
+object FeatureNu extends Feature {
   def name = "ν"
-  override def depend = List(FeatureS, PluginAlpha, PluginZeta)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureS, FeatureAlpha, FeatureZeta)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginXi extends Plugin {
+object FeatureXi extends Feature {
   def name = "ξ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginOmicron extends Plugin {
+object FeatureOmicron extends Feature {
   def name = "ο"
-  override def depend = List(FeatureA, PluginGamma, PluginZeta)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureA, FeatureGamma, FeatureZeta)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginPi extends Plugin {
+object FeaturePi extends Feature {
   def name = "π"
-  override def depend = List(FeatureP, PluginGamma, PluginDelta)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureP, FeatureGamma, FeatureDelta)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginRho extends Plugin {
+object FeatureRho extends Feature {
   def name = "ρ"
-  override def depend = List(FeatureQ, PluginSigma, PluginKappa)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureQ, FeatureSigma, FeatureKappa)
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginSigma extends Plugin {
+object FeatureSigma extends Feature {
   def name = "σ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginTau extends Plugin {
+object FeatureTau extends Feature {
   def name = "τ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginUpsilon extends Plugin {
+object FeatureUpsilon extends Feature {
   def name = "υ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginPhi extends Plugin {
+object FeaturePhi extends Feature {
   def name = "φ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginChi extends Plugin {
+object FeatureChi extends Feature {
   def name = "χ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginPsi extends Plugin {
+object FeaturePsi extends Feature {
   def name = "ψ"
   override def depend = Nil
-  def init(implicit c: PluginContextBuilder) { }
+  def init(implicit c: ContextBuilder) { }
 }
 
-object PluginOmega extends Plugin {
+object FeatureOmega extends Feature {
   def name = "ω"
-  override def depend = List(FeatureK, PluginSigma, PluginAlpha)
-  def init(implicit c: PluginContextBuilder) { }
+  override def depend = List(FeatureK, FeatureSigma, FeatureAlpha)
+  def init(implicit c: ContextBuilder) { }
 }
 
 class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   //  Test Hooks
   
-  val actionHookKA = ActionHook.simple("か ka")
+  val actionHookKA = ActionHook[Unit]("か ka")
   val actionHookKI = ActionHook[String]("き ki")
   val actionHookKU = ActionHook[(Int, Int)]("く ku")
-  val actionHookKE = ActionHook.simple("け ke")
-  val actionHookKO = ActionHook.simple("こ ko")
+  val actionHookKE = ActionHook[Unit]("け ke")
+  val actionHookKO = ActionHook[Unit]("こ ko")
   
   val filterHookSA = FilterHook[String]("さ sa")
   val filterHookSHI = FilterHook[Int]("し shi")
@@ -337,7 +337,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   
   val guardHookNA = GuardHook[Int]("な na")
   val guardHookNI = GuardHook[String]("に ni")
-  val guardHookNU = GuardHook[Plugin]("ぬ nu")
+  val guardHookNU = GuardHook[Feature]("ぬ nu")
   val guardHookNE = GuardHook[String, String]("ね ne")
   val guardHookNO = GuardHook[Int]("の no")
 
@@ -352,34 +352,34 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   val forbiddenFeatures = List(FeatureQ, FeatureU, FeatureX)
   
   val permittedFeatures = allFeatures.diff(forbiddenFeatures)
-  val expectedFeatures = List(FeatureA, FeatureD, FeatureJ, FeatureK, FeatureR,
-        FeatureT, FeatureZ, FeatureS)
-  val expectedPlugins = List(PluginAlpha, PluginDelta, PluginEpsilon, PluginZeta,
-        PluginTheta, PluginKappa, PluginLambda, PluginMu, PluginNu, PluginOmicron,
-        PluginPi, PluginOmega, PluginRho, PluginGamma, PluginPhi, PluginSigma)
+  /* val expectedFeatures = List(FeatureA, FeatureD, FeatureJ, FeatureK, FeatureR,
+        FeatureT, FeatureZ, FeatureS) */
+  val expectedFeatures = List(FeatureAlpha, FeatureDelta, FeatureEpsilon, FeatureZeta,
+        FeatureTheta, FeatureKappa, FeatureLambda, FeatureMu, FeatureNu, FeatureOmicron,
+        FeaturePi, FeatureOmega, FeatureRho, FeatureGamma, FeaturePhi, FeatureSigma)
     
-  case class SecurityToken(forbidden: List[Plugin])
+  case class SecurityToken(forbidden: List[Feature])
   val securityToken = SecurityToken(forbiddenFeatures)
   
-  def guardFunction(plugin: Plugin)(token: Option[Any]) = {
+  def guardFunction(feature: FeatureLike, token: Option[Any]) = {
     token match {
       case Some(SecurityToken(forbidden)) =>
-        !forbidden.contains(plugin)
+        !forbidden.contains(feature)
       case _ => true
     }
   }
   
   
   //  Utility
-  def report(plugins: List[Plugin], label: String) = {
-    plugins.length+" "+label+": "+plugins.sortBy(_.name).map(_.name).mkString(", ")
+  def report(features: List[FeatureLike], label: String) = {
+    features.length+" "+label+": "+features.sortBy(_.name).map(_.name).mkString(", ")
   }
   
   
   //  Version 2
   feature("A large system") {
     scenario("register all features") {
-      val repo = PluginRepository()
+      val repo = FeatureRepository()
       repo.register(allFeatures: _*)
 
       info(report(repo.features, "features"))
@@ -389,7 +389,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
     }
     
     scenario("require features") {
-      val repo = PluginRepository()      
+      val repo = FeatureRepository()      
       repo.require(reqFeatures: _*)
       
       info(report(repo.features, "features"))
@@ -399,33 +399,31 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
     }
     
     scenario("install a guard") {
-      val repo = PluginRepository()
+      val repo = FeatureRepository()
       repo.register(allFeatures: _*)
       repo.require(reqFeatures: _*)
-      repo.securityGuard.registerGuard(guardFunction _)
+      repo.securityGuard.register(guardFunction _)
       assert(repo.hasFeatures(permittedFeatures: _*))
     }
     
     scenario("create a context") {
-      val repo = PluginRepository()
+      val repo = FeatureRepository()
       repo.register(allFeatures: _*)
       repo.require(reqFeatures: _*)
-      repo.securityGuard.registerGuard(guardFunction _)
+      repo.securityGuard.register(guardFunction _)
       val context = repo.makeContext(desiredFeatures, securityToken)
 
       info(report(permittedFeatures, "permitted features"))
       info(report(context.features, "features"))
-      info(report(context.plugins.diff(context.features), "plugins"))
       val req = reqFeatures.diff(forbiddenFeatures)
       val des = desiredFeatures.diff(forbiddenFeatures)
       assert(req.forall(f => context.hasFeature(f)))
       assert(des.forall(f => context.hasFeature(f)))
       
       assert(expectedFeatures.forall(f => context.hasFeature(f)))
-      assert(expectedPlugins.forall(p => context.hasPlugin(p)))
       
-      assert(context.features.forall(f => permittedFeatures.contains(f)))
-      //context.plugins.length must equal(expectedFeatures.length + expectedPlugins.length)
+      val permitted = (allFeatures ::: expectedFeatures).diff(forbiddenFeatures)
+      assert(context.features.forall(f => permitted.contains(f)))
     }
   }
  
