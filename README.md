@@ -31,10 +31,11 @@ You can run the following commands in the Scala REPL.
 
     ```scala
     object MyFeature extends Feature {
-      def init (implicit val b: ContextBuilder) {
+      val name = "My Feature"
+      def init (implicit cb: ContextBuilder) {
         nameFilter.register { name =>
           val words = name.split(" ").toList
-          val words2 = (name.last+",") :: name.init
+          val words2 = (words.last+",") :: words.init
           words2.mkString(" ")
         }
       }
