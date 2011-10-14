@@ -13,10 +13,12 @@ import scala.collection.mutable.{HashMap, ListBuffer}
  */
  
 trait FeatureRepository {
+  def plugins: List[Plugin]
   def features: List[Feature]
   def requiredFeatures: List[Feature]
   def optionalFeatures: List[Feature] = features.diff(requiredFeatures)
   
+  def registerPlugins(plugins: Plugin*)
   def register(features: Feature*)
   def require(features: Feature*)
   def purge(preserve: Feature*)
@@ -38,10 +40,20 @@ trait FeatureRepository {
 }
 
 class FeatureRepositoryImpl extends FeatureRepository {
+  val _registeredPlugins = ListBuffer[Plugin]()
   val _registeredFeatures = ListBuffer[Feature]()
   val _requiredFeatures = ListBuffer[Feature]()
+  def plugins = _registeredPlugins.toList
   def features = _registeredFeatures.toList
   def requiredFeatures = _requiredFeatures.toList
+
+  def registerPlugins(plugins: Plugin*) {
+    _registeredPlugins.appendAll(plugins.diff(_registeredPlugins))
+    for (plugin <- plugins) {
+      register(plugin.optionalFeatures: _*)
+      require(plugin.requiredFeatures: _*)
+    }
+  }
 
   def register(features: Feature*) {
     _registeredFeatures.appendAll(features.diff(_registeredFeatures))
@@ -130,9 +142,11 @@ class FeatureRepositoryImpl extends FeatureRepository {
 }
 
 class SynchronizedFeatureRepository(val inner: FeatureRepositoryImpl) extends FeatureRepository {
+  def plugins = inner.synchronized { inner.plugins }
   def features = inner.synchronized { inner.features }
   def requiredFeatures = inner.synchronized { inner.requiredFeatures }
   
+  def registerPlugins(plugins: Plugin*) { inner.synchronized { inner.registerPlugins(plugins: _*) } }
   def register(features: Feature*) { inner.synchronized { inner.register(features: _*) } }
   def require(features: Feature*) { inner.synchronized { inner.require(features: _*) } }
   def purge(preserve: Feature*) { inner.synchronized { inner.purge(preserve: _*) } }
@@ -148,10 +162,12 @@ class SynchronizedFeatureRepository(val inner: FeatureRepositoryImpl) extends Fe
 object FeatureRepository extends FeatureRepository {
   val instance = new SynchronizedFeatureRepository(new FeatureRepositoryImpl)
   def apply() = new FeatureRepositoryImpl
-  
+
+  def plugins = instance.plugins  
   def features = instance.features
   def requiredFeatures = instance.requiredFeatures
-  
+
+  def registerPlugins(plugins: Plugin*) { instance.registerPlugins(plugins: _*) }  
   def register(features: Feature*) { instance.register(features: _*) }
   def require(features: Feature*) { instance.require(features: _*) }
   def purge(preserve: Feature*) { instance.purge(preserve: _*) }

@@ -30,6 +30,8 @@ object FeatureDependencyException {
 	}
 }
 
-trait Plugin extends Feature {
-  def options: List[Feature] = Nil
+trait Plugin {
+  def name: String
+  def requiredFeatures: List[Feature] = Nil
+  def optionalFeatures: List[Feature] = Nil
 }
