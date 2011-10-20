@@ -52,7 +52,7 @@ trait HookContext {
 }
 
 trait ContextBuilder extends HookContext {
-  def register[S](hook: Hook[S], value: S)
+  def register[S](hook: Hook[S], value: S): Unit
 }
 
 class HookContextAdaptor(inner: HookContext) extends HookContext {
