@@ -33,23 +33,26 @@ class FeatureLoader(classpath: List[File]) {
 
   def getFeatures: List[Feature] = {
     val featureClasses = ClassFinder.concreteSubclasses("hooks.Feature", classMap)
-    featureClasses.toList.flatMap { case c: ClassInfo => loadFeature(c) }
+    featureClasses.toList.flatMap { case c: ClassInfo => FeatureLoader.loadObject[Feature](c) }
   }
   
-  def loadFeature(classInfo: ClassInfo): Option[Feature] = FeatureLoader.loadObject[Feature](classInfo)
-  def loadPlugin(classInfo: ClassInfo): Option[Plugin] = FeatureLoader.loadObject[Plugin](classInfo)
-
-  def registerFeatures(repo: FeatureRepository) =
-    repo.register(getFeatures: _*)
+  def registerFeatures(repo: FeatureRepository) { repo.register(getFeatures: _*) }
+  def registerFeatures() { registerFeatures(FeatureRepository) }
     
   // plugins
   def getPlugins: List[Plugin] = {
     val pluginClasses = ClassFinder.concreteSubclasses("hooks.Plugin", classMap)
-    pluginClasses.toList.flatMap { case c: ClassInfo => loadPlugin(c) }
+    pluginClasses.toList.flatMap { case c: ClassInfo => FeatureLoader.loadObject[Plugin](c) }
   }
+  
+  def registerPlugins(repo: FeatureRepository) { repo.registerPlugins(getPlugins: _*) }
+  def registerPlugins() { registerPlugins(FeatureRepository) }
 }
 
 class PluginLoader(folder: File, classpath: List[File], suffix: String = ".jar", recurse: Boolean = false) {
+  def registerPlugins(repo: FeatureRepository) { repo.registerPlugins(getPlugins: _*) }
+  def registerPlugins() { registerPlugins(FeatureRepository) }
+
   def getPlugins: List[Plugin] = {
     val pluginClasses = pluginFiles flatMap { file =>
       val finder = ClassFinder(file :: classpath)
@@ -58,7 +61,7 @@ class PluginLoader(folder: File, classpath: List[File], suffix: String = ".jar",
       val pluginClasses = classes.filter(_.location == file).toList
       pluginClasses.headOption
     }
-    pluginClasses flatMap ( c => loadPlugin(c) )
+    pluginClasses flatMap ( c => FeatureLoader.loadObject[Plugin](c) )
   }
   
   def pluginFiles: List[File] = {
@@ -75,6 +78,4 @@ class PluginLoader(folder: File, classpath: List[File], suffix: String = ".jar",
     } else
       folder.listFiles(suffixFilter).toList
   }
-
-  def loadPlugin(classInfo: ClassInfo): Option[Plugin] = FeatureLoader.loadObject[Plugin](classInfo)
 }
