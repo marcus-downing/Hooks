@@ -7,11 +7,13 @@ import hooks._
 class RepoSpec extends Spec {
   describe("A dummy context") {
     it("should store hook") {
-      implicit val dummy = HookContext.dummy
-      val hook = FilterHook[String]("Dummy test")
-      hook.register(v => "bar")
-      val result = hook("foo")
-      assert(result == "bar")
+      HookContext.dummy().using {
+        val hook = FilterHook[String]("Dummy test")
+        hook.register(v => "bar")
+        val result = hook("foo")
+        println("RepoSpec #14: "+result)
+        assert(result == "bar")
+      }
     }
   }
   
@@ -191,7 +193,7 @@ class RepoSpec extends Spec {
 object TestFeature extends Feature {
 	def name = "Test Feature"
 	override def depend = Nil
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 // test 2: dependencies
@@ -199,19 +201,19 @@ object TestFeature extends Feature {
 object TestFeature2 extends Feature {
 	def name = "Test Feature 2"
 	override def depend = List(TestFeature2A, TestFeature2B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature2A extends FeatureLike {
 	def name = "Test Feature 2A"
 	override def depend = Nil
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature2B extends FeatureLike {
 	def name = "Test Feature 2B"
 	override def depend = Nil
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 // test 3: before
@@ -219,20 +221,20 @@ object TestFeature2B extends FeatureLike {
 object TestFeature3 extends Feature {
 	def name = "Test Feature 3"
 	override def depend = List(TestFeature3A, TestFeature3B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature3A extends FeatureLike {
 	def name = "Test Feature 3A"
 	override def depend = Nil
 	override def before = List(TestFeature3B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature3B extends FeatureLike {
 	def name = "Test Feature 3B"
 	override def depend = Nil
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 // test 4: after
@@ -240,20 +242,20 @@ object TestFeature3B extends FeatureLike {
 object TestFeature4 extends Feature {
 	def name = "Test Feature 4"
 	override def depend = List(TestFeature4A, TestFeature4B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature4A extends FeatureLike {
 	def name = "Test Feature 4A"
 	override def depend = Nil
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature4B extends FeatureLike {
 	def name = "Test Feature 4B"
 	override def depend = Nil
 	override def after = List(TestFeature4A)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 // test 5: incompatible list
@@ -261,21 +263,21 @@ object TestFeature4B extends FeatureLike {
 object TestFeature5 extends Feature {
 	def name = "Test Feature 5"
 	override def depend = List(TestFeature5A, TestFeature5B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature5A extends FeatureLike {
 	def name = "Test Feature 5A"
 	override def depend = Nil
 	override def after = List(TestFeature5B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature5B extends FeatureLike {
 	def name = "Test Feature 5B"
 	override def depend = Nil
 	override def after = List(TestFeature5A)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 // test 6: outside dependencies
@@ -283,14 +285,14 @@ object TestFeature5B extends FeatureLike {
 object TestFeature6 extends Feature {
 	def name = "Test Feature 6"
 	override def depend = List(TestFeature6A)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature6A extends FeatureLike {
 	def name = "Test Feature 6"
 	override def depend = Nil
 	override def after = List(TestFeature5A)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 //  test 7: circular dependencies
@@ -298,17 +300,17 @@ object TestFeature6A extends FeatureLike {
 object TestFeature7 extends Feature {
 	def name = "Test Feature 7"
 	override def depend = List(TestFeature7A)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature7A extends FeatureLike {
 	def name = "Test Feature 7A"
 	override def depend = List(TestFeature7B)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object TestFeature7B extends FeatureLike {
 	def name = "Test Feature 7B"
 	override def depend = List(TestFeature7)
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }

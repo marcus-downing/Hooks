@@ -1,12 +1,12 @@
 package hooks
 
 import scala.collection.mutable.{HashMap, ListBuffer}
+import scala.util.DynamicVariable
 
 object HookContext {
-  def dummy = new HookContextBuilderImpl(Nil)
-  val stack = new ResourceTracker[HookContext, String]() // .sync
-  //implicit def stackContext = stack.get[HookContext].getOrElse(dummy)
-  //implicit def stackBuilder = stack.get[ContextBuilder].getOrElse(dummy)
+  def dummy() = new HookContextBuilderImpl(Nil)
+  val contextVar = new DynamicVariable[HookContext](dummy())
+  def apply[R](f: (HookContext) => R): R = contextVar(f)
 }
 
 trait HookContext {
@@ -15,13 +15,17 @@ trait HookContext {
   def hasRegistered[S](hook: Hook[S]): Boolean
   def get[S](hook: Hook[S]): List[S]
   
+  def using[R](f: => R): R = HookContext.contextVar.withValue(this)(f)
+  
   //  mutations: local-variant contexts
+  /*
   //def stacked[R](f: => R) = HookContext.stack.using(this)(f)
   def mutate = new HookContextMutant(new HookContextBuilderImpl(Nil), this)
   
   def local[R](f: (ContextBuilder) => R) = f(mutate)
+  
   //def localStacked[R](f: => R) = mutate.stacked(f)
-  /*
+  
   def local[R](f: (ContextBuilder) => Unit)(g: (HookContext) => R) = {
     val mutant = mutate
     f(mutant)
@@ -34,8 +38,7 @@ trait HookContext {
     val fixed = mutant.fix
     fixed.stacked(g)
   }
-  */
-  /*
+  
   def local[C, R](f: (ContextBuilder) => C)(g: (C) => (HookContext) => R) = {
     val mutant = mutate
     val carry: C = f(mutant)
@@ -51,8 +54,14 @@ trait HookContext {
   */
 }
 
+object ContextBuilder {
+  val builderVar = new DynamicVariable[ContextBuilder](HookContext.dummy)
+  def apply[R](f: (ContextBuilder) => R): R = builderVar(f)
+}
+
 trait ContextBuilder extends HookContext {
   def register[S](hook: Hook[S], value: S): Unit
+  override def using[R](f: => R): R = super.using { ContextBuilder.builderVar.withValue(this)(f) }
 }
 
 class HookContextAdaptor(inner: HookContext) extends HookContext {

@@ -10,20 +10,28 @@ import java.io.File
 
 object LS {
   var path = "."
+  var allfiles = false
+  
   def main(args: Array[String]) {
     registerFeatures()
     val flags = parseArgs(args)
     run(flags)
   }
   
+  // hooks
+  val fileGuard = GuardHook[File]("File guard")
+  val formatterSelect = SelectableHook[List[File] => String]("Formatter") { fs => fs.head }
+  val unitFormatterSelect = SelectableHook[Int => String]("Unit formatter") { ufs => ufs.head }
+  val filenameFormatterSelect = SelectableHook[String => String]("File name formatter") { fnfs => fnfs.head }
+  
+  val begin = ActionHook("Begin")
+  val before = ActionHook("Before")
+  val after = ActionHook("After")
+  val done = ActionHook("Done")  
+  
+  //  application
   def registerFeatures () {
-    FeatureRepository.register(Verbose)
-    FeatureRepository.register(LongFormat)
-    FeatureRepository.register(ColourOutput)
-    FeatureRepository.register(HumanUnits)
-    FeatureRepository.register(SIUnits)
-    FeatureRepository.register(AllFiles)
-    
+    FeatureRepository.register(Verbose, LongFormat, ColourOutput, HumanUnits, SIUnits, AllFiles)
     FeatureRepository.require(DefaultFeatures)
   }
   
@@ -56,68 +64,59 @@ object LS {
     if (!FeatureRepository.hasFeature(AllFiles))
       fileGuard.register(f => !f.getName().startsWith("."))
     
-    //val files = fileGuard(dir.list())
+    val files = fileGuard(dir.list())
     
-    //val formatter = formatterSelect()
+    val formatter = formatterSelect()
   }
   
-  val fileGuard = GuardHook[File]("File guard")
-  val formatterSelect = SelectableHook[List[File] => String]("Formatter") { fs => fs.head }
-  val unitFormatterSelect = SelectableHook[Int => String]("Unit formatter") { ufs => ufs.head }
-  val filenameFormatterSelect = SelectableHook[String => String]("File name formatter") { fnfs => fnfs.head }
-  
-  val begin = ActionHook("Begin")
-  val before = ActionHook("Before")
-  val after = ActionHook("After")
-  val done = ActionHook("Done")
 }
 
 object DefaultFeatures extends Feature {
   val name = "Default Features"
-  def init(implicit c: HookContextBuilder) = {
-    
+  def init(implicit cb: ContextBuilder) = {
+    fileGuard.register { file => if (LS.allfiles) true else !file.getName().startsWith(".") }
   }
 }
 
 //  features
 object Verbose extends Feature {
   val name = "Verbose"
-  def init(implicit c: HookContextBuilder) = {
-    LS.first.register
+  def init(implicit cb: ContextBuilder) = {
+    //LS.first.register
   }
 }
 
 object All files extends Feature {
   val name = "All files"
-  def init(implicit c: HookContextBuilder) = {
-  
+  def init(implicit cb: ContextBuilder) = {
+    LS.allfiles = true
   }
 }
 
 object LongFormat extends Feature {
   val name = "Long format"
-  def init(implicit c: HookContextBuilder) = {
+  def init(implicit cb: ContextBuilder) = {
   
   }
 }
 
 object ColourOutput extends Feature {
   val name = "Colour output"
-  def init(implicit c: HookContextBuilder) = {
-  
+  def init(implicit cb: ContextBuilder) = {
+    
   }
 }
 
 object HumanUnits extends Feature {
   val name = "Human readable units"
-  def init(implicit c: HookContextBuilder) = {
+  def init(implicit cb: ContextBuilder) = {
   
   }
 }
 
 object SIUnits extends Feature {
   val name = "SI units"
-  def init(implicit c: HookContextBuilder) = {
+  def init(implicit cb: ContextBuilder) = {
   
   }
 }

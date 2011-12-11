@@ -16,7 +16,7 @@ trait FeatureLike {
 	def before: List[FeatureLike] = Nil
 	def after: List[FeatureLike] = Nil
 
-	def init(implicit builder: ContextBuilder)
+	def init()
 }
 
 trait Feature extends FeatureLike

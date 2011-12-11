@@ -3,20 +3,22 @@ package hooks.test
 import org.scalatest.Spec
 
 import hooks._
-import Hooks._
+//import Hooks._
 
 class HookSpec extends Spec {
 	val data = List("foo", "bar", "qux", "ged", "mog", "nib", "kiv")
 	
+  
 	describe("A feature") {
 		describe("with components") {
 			it("should store components") {
 				val repo = FeatureRepository()
 				repo.require(ComponentTestFeature)
-				implicit val context = repo.makeContext(Nil)
-				
-				val strings = ComponentTestFeature.hook._get
-				assert(strings.contains("Foo") && strings.contains("Bar") && strings.length == 2)
+				repo.makeContext(Nil).using {
+          val strings = ComponentTestFeature.hook._get
+          println("#19: "+strings.mkString(", "))
+          assert(strings.contains("foo") && strings.contains("bar") && strings.length == 2)
+        }
 			}
 		}
 		
@@ -24,29 +26,29 @@ class HookSpec extends Spec {
 			it("should filter values") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature.hook("foo")
-				//println(result)
-				assert(result == "foobar")
+				repo.makeContext(Nil).using {				
+          val result = FilterTestFeature.hook("foo")
+          println("#31: "+result)
+          assert(result == "foobar")
+        }
 			}
 			it("should accept filters in overloaded short forms") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature2)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature2.hook("foo")
-				//println(result)
-				assert(result.contains("bar") && result.contains("qux"))
+				repo.makeContext(Nil).using {
+          val result = FilterTestFeature2.hook("foo")
+          println("#40: "+result)
+          assert(result.contains("bar") && result.contains("qux"))
+        }
 			}
 			it("should apply filters in the right order") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature3)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature3.hook("foo")
-				//println(result)
-				assert(result == "foobarqux")
+				repo.makeContext(Nil).using {
+          val result = FilterTestFeature3.hook("foo")
+          println("#49: "+result)
+          assert(result == "foobarqux")
+        }
 			}
 		}
 		
@@ -54,36 +56,38 @@ class HookSpec extends Spec {
 			it("should filter values") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature4)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature4.hook("foo", data)
-				assert(result == "foobar")
+				repo.makeContext(Nil).using {
+          val result = FilterTestFeature4.hook("foo", data)
+          println("#61: "+result)
+          assert(result == "foobar")
+        }
 			} 
 			it("should accept filters in overloaded short forms") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature5)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature5.hook("foo", data)
-				//println(result)
-				assert(result.contains("bar") && result.contains("qux") && result.contains("ged"))
+				repo.makeContext(Nil).using {				
+          val result = FilterTestFeature5.hook("foo", data)
+          println("#70: "+result)
+          assert(result.contains("bar") && result.contains("qux") && result.contains("ged"))
+        }
 			}
 			it("should apply filters in the right order") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature6)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature6.hook("foo", data)
-				//println(result)
-				assert(result == "foobarqux")
+				repo.makeContext(Nil).using {				
+          val result = FilterTestFeature6.hook("foo", data)
+          println("#79: "+result)
+          assert(result == "foobarqux")
+        }
 			}
 			it("should pass a value through unchanged") {
 				val repo = FeatureRepository()
 				repo.require(FilterTestFeature7)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = FilterTestFeature7.hook("foo")
-				assert(result == "foo")
+				repo.makeContext(Nil).using {
+          val result = FilterTestFeature7.hook("foo")
+          println("#88: "+result)
+          assert(result == "foo")
+        }
 			}
 		}
 		
@@ -91,29 +95,31 @@ class HookSpec extends Spec {
 			it("should fire actions") {
 				val repo = FeatureRepository()
 				repo.require(ActionTestFeature1)
-				implicit val context = repo.makeContext(Nil)
-				
-				ActionTestFeature1.hook()
-				assert(ActionTestFeature1.message == data(1))
+				repo.makeContext(Nil).using {
+          ActionTestFeature1.hook()
+          println("#100: "+ActionTestFeature1.message)
+          assert(ActionTestFeature1.message == data(1))
+        }
 			}
 			
 			it("should accept actions in overloaded short forms") {
 				val repo = FeatureRepository()
 				repo.require(ActionTestFeature2)
-				implicit val context = repo.makeContext(Nil)
-				
-				ActionTestFeature2.hook()
-				assert(ActionTestFeature2.message == "foobarqux")
+				repo.makeContext(Nil).using {
+          ActionTestFeature2.hook()
+          println("#110: "+ActionTestFeature2.message)
+          assert(ActionTestFeature2.message == "foobarqux")
+        }
 			}
 			
 			it("should fire actions in the right order") {
 				val repo = FeatureRepository()
 				repo.require(ActionTestFeature3, ActionTestFeature4)
-				implicit val context = repo.makeContext(Nil)
-				
-				ActionTestFeature3.hook()
-				//println(ActionTestFeature3.message)
-				assert(ActionTestFeature3.message == "bar")
+				repo.makeContext(Nil).using {
+          ActionTestFeature3.hook()
+          println("#120: "+ActionTestFeature3.message)
+          assert(ActionTestFeature3.message == "bar")
+        }
 			}
 		}
 		
@@ -121,28 +127,31 @@ class HookSpec extends Spec {
 			it("should fire actions") {
 				val repo = FeatureRepository()
 				repo.require(ActionTestFeature5)
-				implicit val context = repo.makeContext(Nil)
-				
-				ActionTestFeature5.hook(data(1))
-				assert(ActionTestFeature5.message == data(1))
+				repo.makeContext(Nil).using {				
+          ActionTestFeature5.hook(data(1))
+          println("#132: "+ActionTestFeature5.message)
+          assert(ActionTestFeature5.message == data(1))
+        }
 			}
 			
 			it("should accept actions in overloaded short forms") {
 				val repo = FeatureRepository()
 				repo.require(ActionTestFeature6)
-				implicit val context = repo.makeContext(Nil)
-				
-				ActionTestFeature6.hook(data)
-				assert(ActionTestFeature6.message == "foobarqux")
+				repo.makeContext(Nil).using {
+          ActionTestFeature6.hook(data)
+          println("#142: "+ActionTestFeature6.message)
+          assert(ActionTestFeature6.message == "foobarqux")
+        }
 			}
 			
 			it("should fire actions in the right order") {
 				val repo = FeatureRepository()
 				repo.require(ActionTestFeature7, ActionTestFeature4)
-				implicit val context = repo.makeContext(Nil)
-				
-				ActionTestFeature7.hook(data)
-				assert(ActionTestFeature7.message == "bar")
+				repo.makeContext(Nil).using {
+          ActionTestFeature7.hook(data)
+          println("#152: "+ActionTestFeature7.message)
+          assert(ActionTestFeature7.message == "bar")
+        }
 			}
 		}
 		
@@ -150,68 +159,75 @@ class HookSpec extends Spec {
 			it("should collect fragments") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature1)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature1.hook()
-				assert(result.contains("foo") && result.contains("bar"))
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature1.hook()
+          println("#164: "+result)
+          assert(result.contains("foo") && result.contains("bar"))
+        }
 			}
 			it("should collect fragments in the right order") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature2)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature2.hook()
-				assert(result == "barfoo")
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature2.hook()
+          println("#173: "+result)
+          assert(result == "barfoo")
+        }
 			}
 			it("should apply prefix, affix and infix") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature3)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature3.hook()
-				assert(result == "(foo,bar)")
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature3.hook()
+          println("#182: "+result)
+          assert(result == "(foo,bar)")
+        }
 			}
 			it("should delay calculating fragments") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature4)
-				implicit val context = repo.makeContext(Nil)
-				
-				BufferTestFeature4.message = "bar"
-				val result = BufferTestFeature4.hook()
-				assert(result == "bar")
+				repo.makeContext(Nil).using {
+          BufferTestFeature4.message = "bar"
+          val result = BufferTestFeature4.hook()
+          println("#192: "+result)
+          assert(result == "bar")
+        }
 			}
 			it("should transform fragments to strings with a supplied function") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature5)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature5.hook()
-				assert(result == "foo")
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature5.hook()
+          println("#201: "+result)
+          assert(result == "foo")
+        }
 			}
 			it("should apply the early filter to fragments") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature6)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature6.hook()
-				assert(result == "foobar")
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature6.hook()
+          println("#210: "+result)
+          assert(result == "foobar")
+        }
 			}
 			it("should apply the late filter to strings") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature7)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature7.hook()
-				assert(result == "foobar")
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature7.hook()
+          println("#219: "+result)
+          assert(result == "foobar")
+        }
 			}
 			it("should nest buffers") {
 				val repo = FeatureRepository()
 				repo.require(BufferTestFeature8)
-				implicit val context = repo.makeContext(Nil)
-				
-				val result = BufferTestFeature8.hook()
-				//println("8: "+result)
-				assert(result == "foobarquxged")
+				repo.makeContext(Nil).using {
+          val result = BufferTestFeature8.hook()
+          println("#228: "+result)
+          assert(result == "foobarquxged")
+        }
 			}
 		}
 		
@@ -219,19 +235,21 @@ class HookSpec extends Spec {
 		  it ("should approve by default") {
 		    val repo = FeatureRepository()
 		    repo.require(GuardTestFeature1)
-		    implicit val context = repo.makeContext(Nil)
-		    
-		    val result = GuardTestFeature1.hook("foo")
-		    assert(result)
+		    repo.makeContext(Nil).using {
+          val result = GuardTestFeature1.hook("foo")
+          println("#240: "+result)
+          assert(result)
+        }
 		  }
 		  
 		  it ("should refuse when any guard refuses") {
 		    val repo = FeatureRepository()
 		    repo.require(GuardTestFeature2)
-		    implicit val context = repo.makeContext(Nil)
-		    
-		    val result = GuardTestFeature2.hook("foo")
-		    assert(!result)
+		    repo.makeContext(Nil).using {
+          val result = GuardTestFeature2.hook("foo")
+          println("#250: "+result)
+          assert(!result)
+        }
 		  }
 		}
 		
@@ -243,9 +261,9 @@ object ComponentTestFeature extends Feature {
 	val name = "Component Test"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
-		hook.register("Foo")
-		hook.register("Bar")
+	def init() {
+		hook.register("foo")
+		hook.register("bar")
 	}
 }
 
@@ -256,11 +274,11 @@ object FilterTestFeature extends Feature {
 	val name = "Filter Test"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register(transform _)
 	}
 	
-	def transform(value: String, c: HookContext) = value+"bar"
+	def transform(value: String) = value+"bar"
 }
 
 object FilterTestFeature2 extends Feature {
@@ -268,8 +286,8 @@ object FilterTestFeature2 extends Feature {
 	val name = "Filter Test 2"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
-		hook.register((value: String, cx: HookContext) => value+"bar")
+	def init() {
+		hook.register((value: String) => value+"bar")
 		hook.register(value => value+"qux")
 	}
 }
@@ -279,7 +297,7 @@ object FilterTestFeature3 extends Feature {
 	val name = "Filter Test 3"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register(value => value+"bar")
 		hook.register(value => value+"qux")
 	}
@@ -289,11 +307,11 @@ object FilterTestFeature4 extends Feature {
 	val name = "Filter Test 4"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register(transform _)
 	}
 	
-	def transform(value: String, data: List[String], c: HookContext) = value+data(1)
+	def transform(value: String, data: List[String]) = value+data(1)
 }
 
 object FilterTestFeature5 extends Feature {
@@ -301,8 +319,8 @@ object FilterTestFeature5 extends Feature {
 	val name = "Filter Test 5"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
-		hook.register((value, data, s) => value+data(1))
+	def init() {
+		hook.register((value, data) => value+data(1))
 		hook.register((value: String, data: List[String]) => value+data(2))
 		hook.register(value => value+"ged")
 	}
@@ -313,7 +331,7 @@ object FilterTestFeature6 extends Feature {
 	val name = "Filter Test 6"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register((value: String, data: List[String]) => value+data(1))
 		hook.register((value: String, data: List[String]) => value+data(2))
 	}
@@ -324,7 +342,7 @@ object FilterTestFeature7 extends Feature {
 	val name = "Filter Test 7"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {}
+	def init() {}
 }
 
 
@@ -333,12 +351,12 @@ object ActionTestFeature1 extends Feature {
 	def name = "Action Test Feature 1"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
-		hook.register(testMethod _)
+	def init() {
+		hook.register(testMethod)
 	}
 	
 	var message = "foo"
-	def testMethod(cx: HookContext) {
+	def testMethod() {
 		message = "bar"
 	}
 }
@@ -349,8 +367,8 @@ object ActionTestFeature2 extends Feature {
 	override def depend = Nil
 	var message = "foo"
 	
-	def init(implicit builder: ContextBuilder) {
-		hook.register( (c: HookContext) => message = message+"bar" )
+	def init() {
+		hook.register { message = message+"bar" }
 		hook.register(message = message+"qux")
 	}
 }
@@ -361,7 +379,7 @@ object ActionTestFeature3 extends Feature {
 	override def depend = Nil
 	var message = "foo"
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register(message = "bar")
 	}
 }
@@ -371,7 +389,7 @@ object ActionTestFeature4 extends Feature {
 	override def depend = Nil
 	override def before = List(ActionTestFeature3)
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		ActionTestFeature3.hook.register(ActionTestFeature3.message = "qux")
 	}
 }
@@ -382,12 +400,12 @@ object ActionTestFeature5 extends Feature {
 	def name = "Action Test Feature 5"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register(testMethod _)
 	}
 	
 	var message = "foo"
-	def testMethod(m: String, c: HookContext) {
+	def testMethod(m: String) {
 		message = m
 	}
 }
@@ -398,8 +416,8 @@ object ActionTestFeature6 extends Feature {
 	override def depend = Nil
 	var message = "foo"
 	
-	def init(implicit builder: ContextBuilder) {
-		hook.register((data, c) => message = message+data(1))
+	def init() {
+		hook.register((data) => message = message+data(1))
 		hook.register { data: List[String] => message = message+data(2) }
 	}
 }
@@ -410,7 +428,7 @@ object ActionTestFeature7 extends Feature {
 	override def depend = Nil
 	var message = "foo"
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register { data: List[String] => message = data(1) }
 	}
 }
@@ -420,7 +438,7 @@ object ActionTestFeature8 extends Feature {
 	override def depend = Nil
 	override def before = List(ActionTestFeature7)
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		ActionTestFeature7.hook.register { data: List[String] => ActionTestFeature7.message = data(2) }
 	}
 }
@@ -430,7 +448,7 @@ object BufferTestFeature1 extends Feature {
 	def name = "Buffer Test Feature 1"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add("foo")
 		hook.add("bar")
 	}
@@ -441,14 +459,14 @@ object BufferTestFeature2 extends Feature {
 	def name = "Buffer Test Feature 2"
 	override def depend = List(BufferTestFeature2A, BufferTestFeature2B)
 	
-	def init(implicit builder: ContextBuilder) { }
+	def init() { }
 }
 
 object BufferTestFeature2A extends FeatureLike {
 	def name = "Buffer Test Feature 2A"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		BufferTestFeature2.hook.add("foo")
 	}
 }
@@ -458,7 +476,7 @@ object BufferTestFeature2B extends FeatureLike {
 	override def depend = Nil
 	override def before = List(BufferTestFeature2A)
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		BufferTestFeature2.hook.add("bar")
 	}
 }
@@ -468,7 +486,7 @@ object BufferTestFeature3 extends Feature {
 	def name = "Buffer Test Feature 2"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add("foo")
 		hook.add("bar")
 	}
@@ -480,7 +498,7 @@ object BufferTestFeature4 extends Feature {
 	override def depend = Nil
 	var message = "foo"
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add(message)
 	}
 }
@@ -494,7 +512,7 @@ object BufferTestFeature5 extends Feature {
 	def name = "Buffer Test Feature 5"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add(Bar)
 	}
 }
@@ -504,7 +522,7 @@ object BufferTestFeature6 extends Feature {
 	def name = "Buffer Test Feature 6"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add("foo")
 		hook.earlyFilters.register(fr => fr+"bar")
 	}
@@ -515,7 +533,7 @@ object BufferTestFeature7 extends Feature {
 	def name = "Buffer Test Feature 7"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add("foo")
 		hook.lateFilters.register(fr => fr+"bar")
 	}
@@ -527,7 +545,7 @@ object BufferTestFeature8 extends Feature {
 	def name = "Buffer Test Feature 8"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.add("foo")
 		hook.add(innerhook)
 		hook.add("ged")
@@ -541,7 +559,7 @@ object GuardTestFeature1 extends Feature {
 	def name = "Guard Test Feature 1"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 	}
 }
 
@@ -550,7 +568,7 @@ object GuardTestFeature2 extends Feature {
 	def name = "Guard Test Feature 2"
 	override def depend = Nil
 	
-	def init(implicit builder: ContextBuilder) {
+	def init() {
 		hook.register(m => m == "foo")
 		hook.register(m => m == "bar")
 	}

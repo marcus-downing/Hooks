@@ -31,6 +31,9 @@ trait FeatureRepository {
   def makeContext(desiredFeatures: List[Feature]): HookContext
   def makeContext(desiredFeatures: List[Feature], token: Any): HookContext
   
+  def usingFeatures[R](desiredFeatures: List[Feature])(f: => R): R = makeContext(desiredFeatures).using(f)
+  def usingFeatures[R](desiredFeatures: List[Feature], token: Any)(f: => R): R = makeContext(desiredFeatures, token).using(f)
+  
   def copy = {
     val copy = new FeatureRepositoryImpl
     copy.register(this.features: _*)
@@ -132,8 +135,10 @@ class FeatureRepositoryImpl extends FeatureRepository {
     
     //  initialise all the features in order
     val builder = new HookContextBuilderImpl(features)
-    for (feature <- features)
-      feature.init(builder)
+    builder.using {
+      for (feature <- features)
+        feature.init()
+    }
     val registry: Map[Hook[_], List[_]] = 
       builder.registry.toMap.mapValues(_.toList)
 

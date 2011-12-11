@@ -24,7 +24,7 @@ You can run the following commands in the Scala REPL.
 2. Create a hook:
 
     ```scala
-    val nameFilter = FilterHook[String]("Name hook")
+    val nameFilter = FilterHook[String]("Name filter hook")
     ```
 
 3. Create a feature that attaches a callback to that hook:
@@ -42,28 +42,33 @@ You can run the following commands in the Scala REPL.
     }
     ```
 
-4. Register your plugin with the repository:
+4. Register your feature with the repository:
 
     ```scala
     FeatureRepository.register(MyFeature)
     ```
 
-5. Make a context with the desired features:
+5. Choose your desired features:
 
     ```scala
     val optionalFeatures = FeatureRepository.optionalFeatures
     // ...choose some features...
-    implicit val context = FeatureRepository.makeContext(chosenFeatures)
+    FeatureRepository.usingFeatures(chosenFeatures) {
+      // ...do something...
+    }
     ```
 
 6. In the appropriate place in client code, trigger that hook:
 
     ```scala
-    val name = "John Smith"
-    val displayName = nameFilter(name)
+    FeatureRepository.usingFeatures(chosenFeatures) {
+      val name = "John Smith"
+      val displayName = nameFilter(name)
+      println displayName
+    }
     ```
     
-    This should result in the string: ```Smith, John```.
+    This prints the string: ```Smith, John```.
 
 ## Introduction
 

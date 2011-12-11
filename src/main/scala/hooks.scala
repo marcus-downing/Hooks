@@ -14,7 +14,7 @@ import scala.collection.mutable.{ListBuffer}
  */
 
 abstract class Hook[S](val name: String) {
-  def _get(implicit cx: HookContext) = cx.get(this)
+  def _get = HookContext { cx => cx.get(this) }
   def logErrors(f: => Unit) = try { f } catch { case x => x.printStackTrace }
 }
 
@@ -30,10 +30,10 @@ object ComponentHook {
 }
 
 class ComponentHook[T](name: String) extends Hook[T](name) {
-  def register(t: T)(implicit cx: ContextBuilder): Unit = cx.register(this, t)
-  def apply()(implicit cx: HookContext) = _get
-  def components(implicit cx: HookContext) = _get
-  def collect[S <: T](implicit cx: HookContext) = _get.collect{ case s: S => s }
+  def register(t: T): Unit = ContextBuilder { cb => cb.register(this, t) }
+  def apply() = _get
+  def components = _get
+  def collect[S <: T] = _get.collect{ case s: S => s }
 }
 
 class StandaloneComponentHook[T](name: String) extends Hook[T](name) {
@@ -61,6 +61,7 @@ class StandaloneActionHook[S](name: String) extends Hook[(S) => Unit](name) {
   val actions = new ListBuffer[(S) => Unit]()
   def register(f: (S) => Unit): Unit = actions += f
   def register(fn: S => Unit)(implicit d: D1): Unit = actions += new Adapter1(fn).apply _
+  def register(fn: () => Unit)(implicit d: D3): Unit = actions += new Adapter2(fn).apply _
   def register(fn: => Unit)(implicit d: D2): Unit = actions += new Adapter2(fn).apply _
   
   class Adapter1(fn: S => Unit) { def apply(s: S)(cx: HookContext): Unit = fn(s) }
@@ -75,24 +76,20 @@ class StandaloneActionHook0(name: String) extends StandaloneActionHook[Nil.type]
   def apply() { apply(Nil); }
 }
 
-class ActionHook[S](name: String) extends Hook[(S, HookContext) => Unit](name) {
-  def register(fn: (S, HookContext) => Unit)(implicit cx: ContextBuilder): Unit = cx.register(this, fn)
-  def register(fn: S => Unit)(implicit cx: ContextBuilder, d: D1): Unit = cx.register(this, new Adapter1(fn).apply _)
-  def register(fn: (HookContext) => Unit)(implicit cx: ContextBuilder, d: D3): Unit = cx.register(this, new Adapter3(fn).apply _)
-  def register(fn: => Unit)(implicit cx: ContextBuilder, d: D2): Unit = cx.register(this, new Adapter2(fn).apply _)
+class ActionHook[S](name: String) extends Hook[S => Unit](name) {
+  def register(fn: S => Unit): Unit = ContextBuilder { cb => cb.register(this, fn) }
+  def register(fn: => Unit)(implicit d: D2): Unit = ContextBuilder { cb => cb.register(this, new Adapter2(fn).apply _) }
   
-  class Adapter1(fn: S => Unit) { def apply(s: S, cx: HookContext) { fn(s) } }
-  class Adapter2(fn: => Unit) { def apply(s: S, cx: HookContext) { fn } }
-  class Adapter3(fn: (HookContext) => Unit) { def apply(s: S, cx: HookContext) { fn(cx) } }
+  class Adapter2(fn: => Unit) { def apply(s: S) { fn } }
   
   //def delegate[Q >: S](target: ActionHook[Q]) = actions += target.apply _
   
-  def actions(implicit cx: HookContext) = _get
-  def apply(s: S)(implicit cx: HookContext) { for (action <- actions) logErrors { action(s, cx) } }
+  def actions = _get
+  def apply(s: S) { for (action <- actions) logErrors { action(s) } }
 }
 
 class ActionHook0(name: String) extends ActionHook[Nil.type](name) {
-  def apply()(implicit cx: HookContext) { apply(Nil) }
+  def apply() { apply(Nil) }
 }
 
 
@@ -107,22 +104,20 @@ object FilterHook {
   }
 }
 
-class FilterHook[V, S](name: String) extends Hook[(V, S, HookContext) => V](name) {
-  def register(f: (V, S, HookContext) => V)(implicit cx: ContextBuilder): Unit = cx.register(this, f)
-  def register(f: (V, S) => V)(implicit cx: ContextBuilder): Unit = cx.register(this, new Adaptor2(f).filter _)
-  def register(f: (V) => V)(implicit cx: ContextBuilder): Unit = cx.register(this, new Adaptor3(f).filter _)
-  def register(f: (V, HookContext) => V)(implicit cx: ContextBuilder, d: D1): Unit = cx.register(this, new Adaptor4(f).filter _)
+class FilterHook[V, S](name: String) extends Hook[(V, S) => V](name) {
+  def register(f: (V, S) => V): Unit = ContextBuilder { cb => cb.register(this, f) }
+  def register(f: (V) => V): Unit = ContextBuilder { cb => cb.register(this, new Adaptor3(f).filter _) }
   
-  class Adaptor2(f: (V, S) => V) { def filter(v: V, s: S, cx: HookContext) = f(v,s) }
-  class Adaptor3(f: (V) => V) { def filter(v: V, s: S, cx: HookContext) = f(v) }
-  class Adaptor4(f: (V, HookContext) => V) { def filter(v: V, s: S, cx: HookContext) = f(v, cx) }
+  //class Adaptor2(f: (V, S) => V) { def filter(v: V, s: S) = f(v,s) }
+  class Adaptor3(f: (V) => V) { def filter(v: V, s: S) = f(v) }
+  //class Adaptor4(f: (V, HookContext) => V) { def filter(v: V, s: S, cx: HookContext) = f(v, cx) }
 
-  def filters(implicit cx: HookContext) = _get
-  def apply(value: V, extra: S)(implicit cx: HookContext): V = filters.foldLeft(value) { (value, filter) => filter(value, extra, cx) }
+  def filters = _get
+  def apply(value: V, extra: S): V = filters.foldLeft(value) { (value, filter) => filter(value, extra) }
 }
 
 class FilterHook0[V](name: String) extends FilterHook[V, Nil.type](name: String) {
-  def apply(value: V)(implicit cx: HookContext): V = apply(value, Nil)
+  def apply(value: V): V = apply(value, Nil)
 }
 
 class StandaloneFilterHook[V, S](name: String) extends Hook[(V, S) => V](name) {
@@ -143,8 +138,8 @@ class StandaloneFilterHook0[V](name: String) extends StandaloneFilterHook[V, Nil
 
 //  A hook that selects just one of the registered objects
 object SelectableHook {
-  def apply[T](name: String)(selector: (List[T], HookContext) => Option[T]) = new SelectableHook0(name, selector)
-  def apply[T, S](name: String)(selector: (List[T], S, HookContext) => Option[T]) = new SelectableHook(name, selector)
+  def apply[T](name: String)(selector: (List[T]) => Option[T]) = new SelectableHook0(name, selector)
+  def apply[T, S](name: String)(selector: (List[T], S) => Option[T]) = new SelectableHook(name, selector)
   
   object standalone {
     def apply[T](name: String)(selector: (List[T]) => Option[T]) = new StandaloneSelectableHook0(name, selector)
@@ -162,20 +157,20 @@ class SimpleSelectableHook[T](name: String)(selector: (List[T], HookContext) => 
 }
 */
 
-class SelectableHook[T, S](name: String, selector: (List[T], S, HookContext) => Option[T]) extends Hook[T](name) {
+class SelectableHook[T, S](name: String, selector: (List[T], S) => Option[T]) extends Hook[T](name) {
   val guard = GuardHook.standalone[T, S](name+" (guard)")
-  def register(t: T)(implicit cx: ContextBuilder): Unit = cx.register(this, t)
+  def register(t: T): Unit = ContextBuilder { cb => cb.register(this, t) }
   
-  def items(extra: S)(implicit cx: HookContext): List[T] = guard(_get, extra).toList
-  def apply(extra: S)(implicit cx: HookContext): Option[T] = selector(items(extra), extra, cx)
+  def items(extra: S): List[T] = guard(_get, extra).toList
+  def apply(extra: S): Option[T] = selector(items(extra), extra)
 }
 
-class SelectableHook0[T](name: String, selector: (List[T], HookContext) => Option[T]) extends SelectableHook[T, Nil.type](name, new SelectableHook0Adaptor(selector).apply _) {
-  def apply()(implicit cx: HookContext): Option[T] = apply(Nil)
+class SelectableHook0[T](name: String, selector: (List[T]) => Option[T]) extends SelectableHook[T, Nil.type](name, new SelectableHook0Adaptor(selector).apply _) {
+  def apply(): Option[T] = apply(Nil)
 }
 
-class SelectableHook0Adaptor[T](selector: (List[T], HookContext) => Option[T]) {
-  def apply(items: List[T], nil: Nil.type, cx: HookContext): Option[T] = selector(items, cx)
+class SelectableHook0Adaptor[T](selector: List[T] => Option[T]) {
+  def apply(items: List[T], nil: Nil.type): Option[T] = selector(items)
 }
 
 /*
@@ -230,26 +225,26 @@ object BufferHook {
   }
 }
 
-class BufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[(HookContext) => String](name) {
+class BufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]](name) {
   val earlyFilters = FilterHook[T](name+" (early filter)")
   val lateFilters = FilterHook[String](name+" (late filter)")
 
-  def add(f: (HookContext) => T)(implicit cx: ContextBuilder): Unit = cx.register(this, new Adaptor1(f).render _)
-  def add(f: => T)(implicit cx: ContextBuilder): Unit = cx.register(this, new Adaptor2(f).render _)
-  def add(nested: BufferHook[_])(implicit cx: ContextBuilder): Unit = cx.register(this, new NestAdaptor(nested).render _)
+  //def add(f: (HookContext) => T): Unit = ContextBuilder { cb => cb.register(this, new Adaptor1(f).render _) }
+  def add(f: => T): Unit = ContextBuilder { cb => cb.register(this, new Adaptor2(f).render _) }
+  def add(nested: BufferHook[_]): Unit = ContextBuilder { cb => cb.register(this, new NestAdaptor(nested).render _) }
   
-  class Adaptor1(f: (HookContext) => T) { def render(cx: HookContext): String = fix(earlyFilters(f(cx))(cx)) }
-  class Adaptor2(f: => T) { def render(cx: HookContext): String = fix(earlyFilters(f)(cx)) }
-  class NestAdaptor(nested: BufferHook[_]) { def render(cx: HookContext): String = nested()(cx) }
+  //class Adaptor1(f: (HookContext) => T) { def render(cx: HookContext): String = fix(earlyFilters(f(cx))(cx)) }
+  class Adaptor2(f: => T) { def render(): String = fix(earlyFilters(f)) }
+  class NestAdaptor(nested: BufferHook[_]) { def render(): String = nested() }
   
-  def fragments(implicit cx: HookContext) = _get
-  def apply()(implicit cx: HookContext) = {
-    val strings = fragments.map((f: (HookContext) => String) => lateFilters(f(cx))(cx))
+  def fragments = _get
+  def apply() = {
+    val strings = fragments.map { (f: Function0[String]) => lateFilters(f()) }
     strings.mkString(prefix, infix, affix)
   }
 }
 
-class StandaloneBufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[() => String](name) {
+class StandaloneBufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]](name) {
   val _producers = new ListBuffer[() => String]()
   val earlyFilters = FilterHook.standalone[T](name+" (early filter)")
   val lateFilters = FilterHook.standalone[String](name+" (late filter)")
@@ -279,29 +274,28 @@ object GuardHook {
   }
 }
 
-class GuardHook[T, S](name: String) extends Hook[(T, S, HookContext) => Boolean](name) {
-  def register(f: (T, S, HookContext) => Boolean)(implicit cx: ContextBuilder): Unit = cx.register(this, f)
-  def register(f: (T, S) => Boolean)(implicit cx: ContextBuilder, d: D1): Unit = cx.register(this, new Adaptor2(f).guard _)
-  def register(f: (T) => Boolean)(implicit cx: ContextBuilder, d: D2): Unit = cx.register(this, new Adaptor3(f).guard _)
+class GuardHook[T, S](name: String) extends Hook[(T, S) => Boolean](name) {
+  def register(f: (T, S) => Boolean)(implicit d: D1): Unit = ContextBuilder { cb => cb.register(this, new Adaptor2(f).guard _) }
+  def register(f: (T) => Boolean)(implicit d: D2): Unit = ContextBuilder { cb => cb.register(this, new Adaptor3(f).guard _) }
   
-  class Adaptor2(f: (T, S) => Boolean) { def guard(v: T, s: S, cx: HookContext) = f(v,s) }
-  class Adaptor3(f: (T) => Boolean) { def guard(v: T, s: S, cx: HookContext) = f(v) }
+  class Adaptor2(f: (T, S) => Boolean) { def guard(v: T, s: S) = f(v,s) }
+  class Adaptor3(f: (T) => Boolean) { def guard(v: T, s: S) = f(v) }
   
-  def guards(implicit cx: HookContext) = _get
-  def apply(value: T, extra: S)(implicit cx: HookContext): Boolean = {
+  def guards = _get
+  def apply(value: T, extra: S): Boolean = {
     val guards = this.guards
-    guards.isEmpty || guards.forall(g => g(value, extra, cx))
+    guards.isEmpty || guards.forall(g => g(value, extra))
   }
-  def apply(values: Seq[T], extra: S)(implicit cx: HookContext): Seq[T] = values.filter(v => this(v, extra))
-  def apply(values: Option[T], extra: S)(implicit cx: HookContext): Option[T] = values.filter(v => this(v, extra))
-  def apply(values: List[T], extra: S)(implicit cx: HookContext): List[T] = values.filter(v => this(v, extra))
+  def apply(values: Seq[T], extra: S): Seq[T] = values.filter(v => this(v, extra))
+  def apply(values: Option[T], extra: S): Option[T] = values.filter(v => this(v, extra))
+  def apply(values: List[T], extra: S): List[T] = values.filter(v => this(v, extra))
 }
 
 class GuardHook0[T](name: String) extends GuardHook[T, Nil.type](name) {
-  def apply(value: T)(implicit cx: HookContext): Boolean = apply(value, Nil)
-  def apply(values: Seq[T])(implicit cx: HookContext): Seq[T] = values.filter(v => this(v))
-  def apply(values: Option[T])(implicit cx: HookContext): Option[T] = values.filter(v => this(v))
-  def apply(values: List[T])(implicit cx: HookContext): List[T] = values.filter(v => this(v))
+  def apply(value: T): Boolean = apply(value, Nil)
+  def apply(values: Seq[T]): Seq[T] = values.filter(v => this(v))
+  def apply(values: Option[T]): Option[T] = values.filter(v => this(v))
+  def apply(values: List[T]): List[T] = values.filter(v => this(v))
 }
 
 class StandaloneGuardHook[T, S](name: String) extends Hook[(T, S) => Boolean](name) {
@@ -424,8 +418,8 @@ class ResourceTrackerHook[T, ID](name: String) extends Hook[ResourceProvider[T, 
   type P = ResourceProvider[T, ID]
   def providers(implicit cx: HookContext) = _get
   
-  def register(provider: P)(implicit cx: ContextBuilder): Unit = cx.register(this, provider)
-  def register(open: => T, close: (T) => Unit = { t => }, id: Option[ID] = None)(implicit cx: ContextBuilder): Unit = cx.register(this, new P(id, open, close))
+  def register(provider: P): Unit = ContextBuilder { cb => cb.register(this, provider) }
+  def register(open: => T, close: (T) => Unit = { t => }, id: Option[ID] = None): Unit = ContextBuilder { cb => cb.register(this, new P(id, open, close)) }
   
   def apply()(implicit cx: HookContext) = _get.headOption
   def apply(id: ID)(implicit cx: HookContext) = _get.filter(_.id == Some(id)).headOption
@@ -444,8 +438,8 @@ class StandaloneResourceTrackerHook[T, ID](name: String) extends Hook[ResourcePr
   val _providers = new ListBuffer[P]()
   def providers = _providers.toList
   
-  def register(provider: P)(implicit cx: ContextBuilder): Unit = _providers += provider
-  def register(open: => T, close: (T) => Unit = { t => }, id: Option[ID] = None)(implicit cx: ContextBuilder): Unit = _providers += new P(id, open, close)
+  def register(provider: P): Unit = _providers += provider
+  def register(open: => T, close: (T) => Unit = { t => }, id: Option[ID] = None): Unit = _providers += new P(id, open, close)
   
   def apply() = providers.headOption
   def apply(id: ID) = providers.filter(_.id == Some(id)).headOption
@@ -497,3 +491,26 @@ class ResourceTracker[T, ID](list: ResourceProviderList[T, ID]) {
   def apply(): T = _stack.headOption.map(_._2).get
   def apply(id: ID): Option[T] = _stack.filter(_._1 == Some(id)).map(_._2).headOption
 }
+
+
+
+// version 2...
+/*
+object BufferHookB {
+  def apply[T]() = new BufferHookB
+}
+
+class BufferHookB[I, O](name: String, reduce: (List[I], HookContext) => O) extends Hook[HookContext => I](name) {
+  def register(v: HookContext => I)(implicit cx: ContextBuilder) = cx.register(this, v)
+  def register(v: => I)(implicit cx: ContextBuilder) = cx.register(this, new Adapter(v).apply _)
+  def register(v: I)(implicit cx: ContextBuilder) = cx.register(this, new Adapter(v).apply _)
+  
+  class Adapter(v: => I) { def apply(cx: HookContext) = v }
+  
+  def fragments(implicit cx: HookContext) = _get.map(v => v(cx))
+  def apply()(implicit cx: HookContext) = reduce(fragments)
+}
+
+class BufferHookC[T](name: String, reduce: (List[T], HookContext) => T) extends BufferHookB[T, T](name, reduce) {
+  
+}*/
