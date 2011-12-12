@@ -53,6 +53,7 @@ You can run the following commands in the Scala REPL.
     ```scala
     val optionalFeatures = FeatureRepository.optionalFeatures
     // ...choose some features...
+    val chosenFeatures = List(MyFeature)
     FeatureRepository.usingFeatures(chosenFeatures) {
       // ...do something...
     }
