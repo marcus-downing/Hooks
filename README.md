@@ -74,9 +74,14 @@ You can run the following commands in the Scala REPL.
 ## Introduction
 
 As a program grows larger, it often faces a problem: one size no longer fits all.
-A client may want to only enable the parts of a program that are relevant to them,
-or they may want to add a feature nobody else would want.
-If you fork the codebase into separate versions, it can become harder to maintain.
+Each client may want:
+
+* to only enable the parts of a program that are relevant to them
+* to add features nobody else would want
+* to use their own branding or change the way some areas work
+
+It's tempting to fork the codebase into separate versions,
+but this will made it harder to maintain in the future.
 A better solution is to make the code modular.
 
 The aim of **Hooks** is to handle, in as safe a manner as possible,
