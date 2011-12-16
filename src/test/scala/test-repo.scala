@@ -157,7 +157,7 @@ class RepoSpec extends Spec {
 				it("should throw a dependency exception") {
 					val repo = FeatureRepository()
 					repo.register(TestFeature5)
-					intercept[FeatureDependencyException] { repo.makeContext(List(TestFeature5)) }
+          intercept[FeatureDependencyException] { repo.makeContext(List(TestFeature5)) }
 				}
 			}
 			
@@ -190,127 +190,86 @@ class RepoSpec extends Spec {
 
 // test 1: features
 
-object TestFeature extends Feature {
-	def name = "Test Feature"
-	override def depend = Nil
+object TestFeature extends Feature("Test Feature 1") {
 	def init() { }
 }
 
 // test 2: dependencies
 
-object TestFeature2 extends Feature {
-	def name = "Test Feature 2"
-	override def depend = List(TestFeature2A, TestFeature2B)
+object TestFeature2 extends Feature("Test Feature 2", depend = List(TestFeature2A, TestFeature2B)) {
 	def init() { }
 }
 
-object TestFeature2A extends FeatureLike {
-	def name = "Test Feature 2A"
-	override def depend = Nil
+object TestFeature2A extends FeatureLike("Test Feature 2A") {
 	def init() { }
 }
 
-object TestFeature2B extends FeatureLike {
-	def name = "Test Feature 2B"
-	override def depend = Nil
+object TestFeature2B extends FeatureLike("Test Feature 2B") {
 	def init() { }
 }
 
 // test 3: before
 
-object TestFeature3 extends Feature {
-	def name = "Test Feature 3"
-	override def depend = List(TestFeature3A, TestFeature3B)
+object TestFeature3 extends Feature("Test Feature 3", depend = List(TestFeature3A, TestFeature3B)) {
 	def init() { }
 }
 
-object TestFeature3A extends FeatureLike {
-	def name = "Test Feature 3A"
-	override def depend = Nil
-	override def before = List(TestFeature3B)
+object TestFeature3A extends FeatureLike("Test Feature 3A", before = List(TestFeature3B)) {
 	def init() { }
 }
 
-object TestFeature3B extends FeatureLike {
-	def name = "Test Feature 3B"
-	override def depend = Nil
+object TestFeature3B extends FeatureLike("Test Feature 3B") {
 	def init() { }
 }
 
 // test 4: after
 
-object TestFeature4 extends Feature {
-	def name = "Test Feature 4"
-	override def depend = List(TestFeature4A, TestFeature4B)
+object TestFeature4 extends Feature("Test Feature 4", depend = List(TestFeature4A, TestFeature4B)) {
 	def init() { }
 }
 
-object TestFeature4A extends FeatureLike {
-	def name = "Test Feature 4A"
-	override def depend = Nil
+object TestFeature4A extends FeatureLike("Test Feature 4A") {
 	def init() { }
 }
 
-object TestFeature4B extends FeatureLike {
-	def name = "Test Feature 4B"
-	override def depend = Nil
-	override def after = List(TestFeature4A)
+object TestFeature4B extends FeatureLike("Test Feature 4B", after = List(TestFeature4A)) {
 	def init() { }
 }
 
 // test 5: incompatible list
 
-object TestFeature5 extends Feature {
-	def name = "Test Feature 5"
-	override def depend = List(TestFeature5A, TestFeature5B)
+object TestFeature5 extends Feature("Test Feature 5", depend = List(TestFeature5A, TestFeature5B)) {
 	def init() { }
 }
 
-object TestFeature5A extends FeatureLike {
-	def name = "Test Feature 5A"
-	override def depend = Nil
-	override def after = List(TestFeature5B)
+object TestFeature5A extends FeatureLike("Test Feature 5A", after = List(TestFeature5B)) {
 	def init() { }
 }
 
-object TestFeature5B extends FeatureLike {
-	def name = "Test Feature 5B"
-	override def depend = Nil
-	override def after = List(TestFeature5A)
+object TestFeature5B extends FeatureLike("Test Feature 5B", after = List(TestFeature5A)) {
 	def init() { }
 }
 
 // test 6: outside dependencies
 
-object TestFeature6 extends Feature {
-	def name = "Test Feature 6"
-	override def depend = List(TestFeature6A)
+object TestFeature6 extends Feature("Test Feature 6", depend = List(TestFeature6A)) {
 	def init() { }
 }
 
-object TestFeature6A extends FeatureLike {
-	def name = "Test Feature 6"
-	override def depend = Nil
-	override def after = List(TestFeature5A)
+object TestFeature6A extends FeatureLike("Test Feature 6", after = List(TestFeature5A)) {
 	def init() { }
 }
 
 //  test 7: circular dependencies
 
-object TestFeature7 extends Feature {
-	def name = "Test Feature 7"
-	override def depend = List(TestFeature7A)
+object TestFeature7 extends Feature("Test Feature 7", depend = List(TestFeature7A)) {
 	def init() { }
 }
 
-object TestFeature7A extends FeatureLike {
-	def name = "Test Feature 7A"
-	override def depend = List(TestFeature7B)
+object TestFeature7A extends FeatureLike("Test Feature 7A", depend = List(TestFeature7B)) {
 	def init() { }
 }
 
-object TestFeature7B extends FeatureLike {
-	def name = "Test Feature 7B"
-	override def depend = List(TestFeature7)
+object TestFeature7B extends FeatureLike("Test Feature 7B", depend = List(TestFeature7)) {
 	def init() { }
 }

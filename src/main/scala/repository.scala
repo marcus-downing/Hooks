@@ -53,8 +53,8 @@ class FeatureRepositoryImpl extends FeatureRepository {
   def registerPlugins(plugins: Plugin*) {
     _registeredPlugins.appendAll(plugins.diff(_registeredPlugins))
     for (plugin <- plugins) {
-      register(plugin.optionalFeatures: _*)
-      require(plugin.requiredFeatures: _*)
+      register(plugin._optionalFeatures: _*)
+      require(plugin._requiredFeatures: _*)
     }
   }
 
@@ -83,7 +83,7 @@ class FeatureRepositoryImpl extends FeatureRepository {
       else {
         val future = for {
           f <- present
-          p <- f.depend
+          p <- f._depend
         } yield p
         val future2 = future.distinct.filter { p =>
           !past.contains(p) && !present.contains(p) && securityGuard(p, token)
@@ -115,8 +115,8 @@ class FeatureRepositoryImpl extends FeatureRepository {
     }
   
     val edges: List[(FeatureLike, FeatureLike)] = {
-      val edges1: List[(FeatureLike, FeatureLike)] = for { p <- in; b <- p.before.intersect(in) } yield (b, p)
-      val edges2: List[(FeatureLike, FeatureLike)] = for { p <- in; a <- p.after.intersect(in) } yield (p, a)
+      val edges1: List[(FeatureLike, FeatureLike)] = for { p <- in; b <- p._before.intersect(in) } yield (b, p)
+      val edges2: List[(FeatureLike, FeatureLike)] = for { p <- in; a <- p._after.intersect(in) } yield (p, a)
       (edges1 ::: edges2).distinct
     }
     val freeNodes = for { n <- in; if !edges.exists(edge => edge._2 == n) } yield n

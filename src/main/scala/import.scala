@@ -10,6 +10,8 @@ import scala.util.DynamicVariable
 package object hooks {
   //import ApplicableVariable.dynamicVariable2applicable
   implicit def pimpDynamicVariable[T](dv: DynamicVariable[T]) = new PimpDynamicVariable[T](dv)
+  //implicit def dymamicVariable2Option[T](dv: DynamicVariable[T]): Option[T] = Option(dv.value)
+  //implicit def dymamicVariable2Option[T](dv: DynamicVariable[T]): List[T] = Option(dv.value).toList
 
   /**
    * Helper imports

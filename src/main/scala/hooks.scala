@@ -15,6 +15,8 @@ import scala.collection.mutable.{ListBuffer}
 
 abstract class Hook[S](val name: String) {
   def _get = HookContext { cx => cx.get(this) }
+  def _register(s: S) = ContextBuilder { cb => cb.register(this, s) }
+  //def _get: List[S] = for (cx: HookContext <- Option(HookContext.contextVar.value)) yield cx.get(this)
   def logErrors(f: => Unit) = try { f } catch { case x => x.printStackTrace }
 }
 
@@ -30,7 +32,7 @@ object ComponentHook {
 }
 
 class ComponentHook[T](name: String) extends Hook[T](name) {
-  def register(t: T): Unit = ContextBuilder { cb => cb.register(this, t) }
+  def register(t: T): Unit = _register(t)
   def apply() = _get
   def components = _get
   def collect[S <: T] = _get.collect{ case s: S => s }
@@ -64,8 +66,8 @@ class StandaloneActionHook[S](name: String) extends Hook[(S) => Unit](name) {
   def register(fn: () => Unit)(implicit d: D3): Unit = actions += new Adapter2(fn).apply _
   def register(fn: => Unit)(implicit d: D2): Unit = actions += new Adapter2(fn).apply _
   
-  class Adapter1(fn: S => Unit) { def apply(s: S)(cx: HookContext): Unit = fn(s) }
-  class Adapter2(fn: => Unit) { def apply(s: S)(cx: HookContext): Unit = fn }
+  class Adapter1(fn: S => Unit) { def apply(s: S): Unit = fn(s) }
+  class Adapter2(fn: => Unit) { def apply(s: S): Unit = fn }
   
   //def delegate[Q >: S](target: StandaloneActionHook[Q]) = actions += target.apply _
   
@@ -77,8 +79,8 @@ class StandaloneActionHook0(name: String) extends StandaloneActionHook[Nil.type]
 }
 
 class ActionHook[S](name: String) extends Hook[S => Unit](name) {
-  def register(fn: S => Unit): Unit = ContextBuilder { cb => cb.register(this, fn) }
-  def register(fn: => Unit)(implicit d: D2): Unit = ContextBuilder { cb => cb.register(this, new Adapter2(fn).apply _) }
+  def register(fn: S => Unit): Unit = _register(fn)
+  def register(fn: => Unit)(implicit d: D2): Unit = _register(new Adapter2(fn).apply _)
   
   class Adapter2(fn: => Unit) { def apply(s: S) { fn } }
   
@@ -105,8 +107,8 @@ object FilterHook {
 }
 
 class FilterHook[V, S](name: String) extends Hook[(V, S) => V](name) {
-  def register(f: (V, S) => V): Unit = ContextBuilder { cb => cb.register(this, f) }
-  def register(f: (V) => V): Unit = ContextBuilder { cb => cb.register(this, new Adaptor3(f).filter _) }
+  def register(f: (V, S) => V): Unit = _register(f)
+  def register(f: (V) => V): Unit = _register(new Adaptor3(f).filter _)
   
   //class Adaptor2(f: (V, S) => V) { def filter(v: V, s: S) = f(v,s) }
   class Adaptor3(f: (V) => V) { def filter(v: V, s: S) = f(v) }
@@ -148,18 +150,18 @@ object SelectableHook {
 }
 
 /*
-class SimpleSelectableHook[T](name: String)(selector: (List[T], HookContext) => Option[T]) extends Hook[T](name) {
+class SimpleSelectableHook[T](name: String)(selector: (List[T]) => Option[T]) extends Hook[T](name) {
   val guard = GuardHook.standalone[T](name+" (guard)")
-  def register(t: T)(implicit cx: ContextBuilder) = cx.register(this, t)
+  def register(t: T) = _register(t)
   
-  def items(implicit cx: HookContext): List[T] = guard(_get).toList
-  def apply()(implicit cx: HookContext) = selector(items, cx)
+  def items: List[T] = guard(_get).toList
+  def apply() = selector(items, cx)
 }
 */
 
 class SelectableHook[T, S](name: String, selector: (List[T], S) => Option[T]) extends Hook[T](name) {
   val guard = GuardHook.standalone[T, S](name+" (guard)")
-  def register(t: T): Unit = ContextBuilder { cb => cb.register(this, t) }
+  def register(t: T): Unit = _register(t)
   
   def items(extra: S): List[T] = guard(_get, extra).toList
   def apply(extra: S): Option[T] = selector(items(extra), extra)
@@ -229,11 +231,9 @@ class BufferHook[T](name: String, prefix: String, infix: String, affix: String, 
   val earlyFilters = FilterHook[T](name+" (early filter)")
   val lateFilters = FilterHook[String](name+" (late filter)")
 
-  //def add(f: (HookContext) => T): Unit = ContextBuilder { cb => cb.register(this, new Adaptor1(f).render _) }
-  def add(f: => T): Unit = ContextBuilder { cb => cb.register(this, new Adaptor2(f).render _) }
-  def add(nested: BufferHook[_]): Unit = ContextBuilder { cb => cb.register(this, new NestAdaptor(nested).render _) }
+  def add(f: => T): Unit = _register(new Adaptor2(f).render _)
+  def add(nested: BufferHook[_]): Unit = _register(new NestAdaptor(nested).render _)
   
-  //class Adaptor1(f: (HookContext) => T) { def render(cx: HookContext): String = fix(earlyFilters(f(cx))(cx)) }
   class Adaptor2(f: => T) { def render(): String = fix(earlyFilters(f)) }
   class NestAdaptor(nested: BufferHook[_]) { def render(): String = nested() }
   
@@ -275,8 +275,8 @@ object GuardHook {
 }
 
 class GuardHook[T, S](name: String) extends Hook[(T, S) => Boolean](name) {
-  def register(f: (T, S) => Boolean)(implicit d: D1): Unit = ContextBuilder { cb => cb.register(this, new Adaptor2(f).guard _) }
-  def register(f: (T) => Boolean)(implicit d: D2): Unit = ContextBuilder { cb => cb.register(this, new Adaptor3(f).guard _) }
+  def register(f: (T, S) => Boolean)(implicit d: D1): Unit = _register(new Adaptor2(f).guard _)
+  def register(f: (T) => Boolean)(implicit d: D2): Unit = _register(new Adaptor3(f).guard _)
   
   class Adaptor2(f: (T, S) => Boolean) { def guard(v: T, s: S) = f(v,s) }
   class Adaptor3(f: (T) => Boolean) { def guard(v: T, s: S) = f(v) }
@@ -342,8 +342,8 @@ class SynchronizedStandaloneGuardHook[T, S](inner: StandaloneGuardHook[T, S]) {
 //  encode() combines the Outer value with an original Inner to produce a revised Inner
 /*
 class SimpleLensHook[I, O](name: String) extends Hook[Dec](name) {
-  type Dec = (I) => (HookContext) => O
-  type Enc = (O, I) => (HookContext) => I
+  type Dec = (I) => O
+  type Enc = (O, I) => I
   
   class Counterpart extends Hook[Enc](name) {
     def decode = LensHook.this.encode
@@ -416,20 +416,20 @@ class ResourceProvider[T, ID](val id: Option[ID], open_fn: => T, val close: (T) 
 
 class ResourceTrackerHook[T, ID](name: String) extends Hook[ResourceProvider[T, ID]](name) {
   type P = ResourceProvider[T, ID]
-  def providers(implicit cx: HookContext) = _get
+  def providers = _get
   
-  def register(provider: P): Unit = ContextBuilder { cb => cb.register(this, provider) }
-  def register(open: => T, close: (T) => Unit = { t => }, id: Option[ID] = None): Unit = ContextBuilder { cb => cb.register(this, new P(id, open, close)) }
+  def register(provider: P): Unit = _register(provider)
+  def register(open: => T, close: (T) => Unit = { t => }, id: Option[ID] = None): Unit = _register(new P(id, open, close))
   
-  def apply()(implicit cx: HookContext) = _get.headOption
-  def apply(id: ID)(implicit cx: HookContext) = _get.filter(_.id == Some(id)).headOption
+  def apply() = _get.headOption
+  def apply(id: ID) = _get.filter(_.id == Some(id)).headOption
   
-  def _list(implicit cx: HookContext) = new ResourceProviderList[T, ID] {
+  def _list = new ResourceProviderList[T, ID] {
     def all = providers
     def get = apply()
     def get(id: ID) = apply(id)
   }
-  def tracker(implicit cx: HookContext) = new ResourceTracker(_list)
+  def tracker = new ResourceTracker(_list)
 }
 
 class StandaloneResourceTrackerHook[T, ID](name: String) extends Hook[ResourceProvider[T, ID]](name) {
@@ -500,17 +500,16 @@ object BufferHookB {
   def apply[T]() = new BufferHookB
 }
 
-class BufferHookB[I, O](name: String, reduce: (List[I], HookContext) => O) extends Hook[HookContext => I](name) {
-  def register(v: HookContext => I)(implicit cx: ContextBuilder) = cx.register(this, v)
-  def register(v: => I)(implicit cx: ContextBuilder) = cx.register(this, new Adapter(v).apply _)
-  def register(v: I)(implicit cx: ContextBuilder) = cx.register(this, new Adapter(v).apply _)
+class BufferHookB[I, O](name: String, reduce: (List[I]) => O) extends Hook[ => I](name) {
+  def register(v: => I) = _register(v)
+  def register(v: I) = _register(new Adapter(v).apply _)
   
-  class Adapter(v: => I) { def apply(cx: HookContext) = v }
+  class Adapter(v: => I) { def apply() = v }
   
-  def fragments(implicit cx: HookContext) = _get.map(v => v(cx))
-  def apply()(implicit cx: HookContext) = reduce(fragments)
+  def fragments = _get.map(v => v())
+  def apply() = reduce(fragments)
 }
 
-class BufferHookC[T](name: String, reduce: (List[T], HookContext) => T) extends BufferHookB[T, T](name, reduce) {
+class BufferHookC[T](name: String, reduce: (List[T]) => T) extends BufferHookB[T, T](name, reduce) {
   
 }*/

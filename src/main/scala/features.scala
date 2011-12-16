@@ -10,16 +10,25 @@ package hooks
  * Use the `init` method to register actions, filters and components.
  */
 
-trait FeatureLike {
-	def name: String
-	def depend: List[FeatureLike] = Nil
-	def before: List[FeatureLike] = Nil
-	def after: List[FeatureLike] = Nil
-
+abstract class FeatureLike(
+  val name: String,
+	depend: => List[FeatureLike] = List.empty,
+	before: => List[FeatureLike] = List.empty,
+	after: => List[FeatureLike] = List.empty
+){
 	def init()
+  override def toString = name
+  def _depend = depend.filterNot( _ == null )
+  def _before = before.filterNot( _ == null )
+  def _after = after.filterNot( _ == null )
 }
 
-trait Feature extends FeatureLike
+abstract class Feature(
+  name: String,
+	depend: => List[FeatureLike] = List.empty,
+	before: => List[FeatureLike] = List.empty,
+	after: => List[FeatureLike] = List.empty
+) extends FeatureLike (name, depend = depend, before = before, after = after)
 
 class FeatureDependencyException(edges: List[(FeatureLike, FeatureLike)]) extends Exception(FeatureDependencyException.message(edges))
 
@@ -30,8 +39,11 @@ object FeatureDependencyException {
 	}
 }
 
-trait Plugin {
-  def name: String
-  def requiredFeatures: List[Feature] = Nil
-  def optionalFeatures: List[Feature] = Nil
+abstract class Plugin(
+  val name: String,
+  requiredFeatures: => List[Feature] = List.empty,
+  optionalFeatures: => List[Feature] = List.empty
+) {
+  def _requiredFeatures = requiredFeatures
+  def _optionalFeatures = optionalFeatures
 }

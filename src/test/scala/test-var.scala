@@ -22,6 +22,32 @@ class VarSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
       
       dyn.withValue("bar") { testValue() }
     }
+    
+    scenario("Stacks values") {
+      val dyn = new DynamicVariable[String](null)
+      dyn.withValue("foo") {
+        assert(dyn.value == "foo")
+        dyn.withValue("bar") {
+          assert(dyn.value == "bar")
+          dyn.withValue("qux") {
+            assert(dyn.value == "qux")
+          }
+          assert(dyn.value == "bar")
+        }
+        assert(dyn.value == "foo")
+      }
+    }
+    
+    scenario("Acts like a monad") {
+      val dyn = new DynamicVariable[String](null)
+      
+      dyn.withValue("foo") {
+        val result = for (v <- dyn.toList) yield v
+        assert(result.mkString("") == "foo")
+      }
+      
+      for (v <- dyn.toList) throw new UnsupportedOperationException
+    }
   }
   
   feature("A context") {

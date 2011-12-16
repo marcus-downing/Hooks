@@ -256,10 +256,8 @@ class HookSpec extends Spec {
 	}
 }
 
-object ComponentTestFeature extends Feature {
+object ComponentTestFeature extends Feature("Component Test") {
 	val hook = new ComponentHook[String]("Test components")
-	val name = "Component Test"
-	override def depend = Nil
 	
 	def init() {
 		hook.register("foo")
@@ -269,10 +267,8 @@ object ComponentTestFeature extends Feature {
 
 //  foo, bar, qux, ged, mog, nib, kiv
 
-object FilterTestFeature extends Feature {
+object FilterTestFeature extends Feature("Filter Test") {
 	val hook = FilterHook[String]("Test filters 1")
-	val name = "Filter Test"
-	override def depend = Nil
 	
 	def init() {
 		hook.register(transform _)
@@ -281,10 +277,8 @@ object FilterTestFeature extends Feature {
 	def transform(value: String) = value+"bar"
 }
 
-object FilterTestFeature2 extends Feature {
+object FilterTestFeature2 extends Feature("Filter Test 2") {
 	val hook = FilterHook[String]("Test filters 2")
-	val name = "Filter Test 2"
-	override def depend = Nil
 	
 	def init() {
 		hook.register((value: String) => value+"bar")
@@ -292,20 +286,16 @@ object FilterTestFeature2 extends Feature {
 	}
 }
 
-object FilterTestFeature3 extends Feature {
+object FilterTestFeature3 extends Feature("Filter Test 3") {
 	val hook = FilterHook[String]("Test filters 3")
-	val name = "Filter Test 3"
-	override def depend = Nil
 	
 	def init() {
 		hook.register(value => value+"bar")
 		hook.register(value => value+"qux")
 	}
 }
-object FilterTestFeature4 extends Feature {
+object FilterTestFeature4 extends Feature("Filter Test 4") {
 	val hook = FilterHook[String, List[String]]("Test filters 4")
-	val name = "Filter Test 4"
-	override def depend = Nil
 	
 	def init() {
 		hook.register(transform _)
@@ -314,10 +304,8 @@ object FilterTestFeature4 extends Feature {
 	def transform(value: String, data: List[String]) = value+data(1)
 }
 
-object FilterTestFeature5 extends Feature {
+object FilterTestFeature5 extends Feature("Filter Test 5") {
 	val hook = FilterHook[String, List[String]]("Test filters 5")
-	val name = "Filter Test 5"
-	override def depend = Nil
 	
 	def init() {
 		hook.register((value, data) => value+data(1))
@@ -326,10 +314,8 @@ object FilterTestFeature5 extends Feature {
 	}
 }
 
-object FilterTestFeature6 extends Feature {
+object FilterTestFeature6 extends Feature("Filter Test 6") {
 	val hook = FilterHook[String, List[String]]("Test filters 6")
-	val name = "Filter Test 6"
-	override def depend = Nil
 	
 	def init() {
 		hook.register((value: String, data: List[String]) => value+data(1))
@@ -337,19 +323,15 @@ object FilterTestFeature6 extends Feature {
 	}
 }
 
-object FilterTestFeature7 extends Feature {
+object FilterTestFeature7 extends Feature("Filter Test 7") {
 	val hook = FilterHook[String]("Test filters 7")
-	val name = "Filter Test 7"
-	override def depend = Nil
 	
 	def init() {}
 }
 
 
-object ActionTestFeature1 extends Feature {
+object ActionTestFeature1 extends Feature("Action Test 1") {
 	val hook: ActionHook0 = ActionHook.simple("Test Action 1")
-	def name = "Action Test Feature 1"
-	override def depend = Nil
 	
 	def init() {
 		hook.register(testMethod)
@@ -361,10 +343,8 @@ object ActionTestFeature1 extends Feature {
 	}
 }
 
-object ActionTestFeature2 extends Feature {
+object ActionTestFeature2 extends Feature("Action Test 2") {
 	val hook = ActionHook.simple("Test Action 2")
-	def name = "Action Test Feature 2"
-	override def depend = Nil
 	var message = "foo"
 	
 	def init() {
@@ -373,10 +353,8 @@ object ActionTestFeature2 extends Feature {
 	}
 }
 
-object ActionTestFeature3 extends Feature {
+object ActionTestFeature3 extends Feature("Action Test 3") {
 	val hook = ActionHook.simple("Test Action 2")
-	def name = "Action Test Feature 3"
-	override def depend = Nil
 	var message = "foo"
 	
 	def init() {
@@ -384,10 +362,7 @@ object ActionTestFeature3 extends Feature {
 	}
 }
 
-object ActionTestFeature4 extends Feature {
-	def name = "Action Test Feature 4"
-	override def depend = Nil
-	override def before = List(ActionTestFeature3)
+object ActionTestFeature4 extends Feature("Action Test 4", before = List(ActionTestFeature3)) {
 	
 	def init() {
 		ActionTestFeature3.hook.register(ActionTestFeature3.message = "qux")
@@ -395,10 +370,8 @@ object ActionTestFeature4 extends Feature {
 }
 
 
-object ActionTestFeature5 extends Feature {
+object ActionTestFeature5 extends Feature("Action Test 5") {
 	val hook = ActionHook[String]("Test Action 1")
-	def name = "Action Test Feature 5"
-	override def depend = Nil
 	
 	def init() {
 		hook.register(testMethod _)
@@ -410,10 +383,8 @@ object ActionTestFeature5 extends Feature {
 	}
 }
 
-object ActionTestFeature6 extends Feature {
+object ActionTestFeature6 extends Feature("Action Test 6") {
 	val hook = ActionHook[List[String]]("Test Action 2")
-	def name = "Action Test Feature 6"
-	override def depend = Nil
 	var message = "foo"
 	
 	def init() {
@@ -422,10 +393,8 @@ object ActionTestFeature6 extends Feature {
 	}
 }
 
-object ActionTestFeature7 extends Feature {
+object ActionTestFeature7 extends Feature("Action Test 7") {
 	val hook = ActionHook[List[String]]("Test Action 2")
-	def name = "Action Test Feature 7"
-	override def depend = Nil
 	var message = "foo"
 	
 	def init() {
@@ -433,20 +402,15 @@ object ActionTestFeature7 extends Feature {
 	}
 }
 
-object ActionTestFeature8 extends Feature {
-	def name = "Action Test Feature 8"
-	override def depend = Nil
-	override def before = List(ActionTestFeature7)
+object ActionTestFeature8 extends Feature("Action Test 8", before = List(ActionTestFeature7)) {
 	
 	def init() {
 		ActionTestFeature7.hook.register { data: List[String] => ActionTestFeature7.message = data(2) }
 	}
 }
 
-object BufferTestFeature1 extends Feature {
+object BufferTestFeature1 extends Feature("Buffer Test 1") {
 	val hook = BufferHook("Test buffers 1")
-	def name = "Buffer Test Feature 1"
-	override def depend = Nil
 	
 	def init() {
 		hook.add("foo")
@@ -454,37 +418,26 @@ object BufferTestFeature1 extends Feature {
 	}
 }
 
-object BufferTestFeature2 extends Feature {
+object BufferTestFeature2 extends Feature("Buffer Test 2", depend = List(BufferTestFeature2A, BufferTestFeature2B)) {
 	val hook = BufferHook("Test buffers 2")
-	def name = "Buffer Test Feature 2"
-	override def depend = List(BufferTestFeature2A, BufferTestFeature2B)
 	
 	def init() { }
 }
 
-object BufferTestFeature2A extends FeatureLike {
-	def name = "Buffer Test Feature 2A"
-	override def depend = Nil
-	
+object BufferTestFeature2A extends FeatureLike("Buffer Test 2A") {
 	def init() {
 		BufferTestFeature2.hook.add("foo")
 	}
 }
 
-object BufferTestFeature2B extends FeatureLike {
-	def name = "Buffer Test Feature 2B"
-	override def depend = Nil
-	override def before = List(BufferTestFeature2A)
-	
+object BufferTestFeature2B extends FeatureLike("Buffer Test 2A", before = List(BufferTestFeature2A)) {
 	def init() {
 		BufferTestFeature2.hook.add("bar")
 	}
 }
 
-object BufferTestFeature3 extends Feature {
-	val hook = BufferHook("Test buffers 2", "(", ",", ")")
-	def name = "Buffer Test Feature 2"
-	override def depend = Nil
+object BufferTestFeature3 extends Feature("Buffer Test 3") {
+	val hook = BufferHook("Test buffers 3", "(", ",", ")")
 	
 	def init() {
 		hook.add("foo")
@@ -492,10 +445,8 @@ object BufferTestFeature3 extends Feature {
 	}
 }
 
-object BufferTestFeature4 extends Feature {
+object BufferTestFeature4 extends Feature("Buffer Test 4") {
 	val hook = BufferHook("Test buffers 4")
-	def name = "Buffer Test Feature 4"
-	override def depend = Nil
 	var message = "foo"
 	
 	def init() {
@@ -503,24 +454,20 @@ object BufferTestFeature4 extends Feature {
 	}
 }
 
-object BufferTestFeature5 extends Feature {
+object BufferTestFeature5 extends Feature("Buffer Test 5") {
 	class Foo
 	object Bar extends Foo
 	val hook = BufferHook[Foo]("Test buffers 5", { foo: Foo => 
 		foo match { case Bar => "foo" }
 	})
-	def name = "Buffer Test Feature 5"
-	override def depend = Nil
 	
 	def init() {
 		hook.add(Bar)
 	}
 }
 
-object BufferTestFeature6 extends Feature {
+object BufferTestFeature6 extends Feature("Buffer Test 6") {
 	val hook = BufferHook("Test buffers 6")
-	def name = "Buffer Test Feature 6"
-	override def depend = Nil
 	
 	def init() {
 		hook.add("foo")
@@ -528,10 +475,8 @@ object BufferTestFeature6 extends Feature {
 	}
 }
 
-object BufferTestFeature7 extends Feature {
+object BufferTestFeature7 extends Feature("Buffer Test 7") {
 	val hook = BufferHook("Test buffers 7")
-	def name = "Buffer Test Feature 7"
-	override def depend = Nil
 	
 	def init() {
 		hook.add("foo")
@@ -539,11 +484,9 @@ object BufferTestFeature7 extends Feature {
 	}
 }
 
-object BufferTestFeature8 extends Feature {
+object BufferTestFeature8 extends Feature("Buffer Test 8") {
 	val hook = BufferHook("Test buffers 8")
 	val innerhook = BufferHook("Test buffers 8 (inner)")
-	def name = "Buffer Test Feature 8"
-	override def depend = Nil
 	
 	def init() {
 		hook.add("foo")
@@ -554,19 +497,15 @@ object BufferTestFeature8 extends Feature {
 	}
 }
 
-object GuardTestFeature1 extends Feature {
+object GuardTestFeature1 extends Feature("Guard Test 1") {
 	val hook = GuardHook[String]("Test guards 1")
-	def name = "Guard Test Feature 1"
-	override def depend = Nil
 	
 	def init() {
 	}
 }
 
-object GuardTestFeature2 extends Feature {
+object GuardTestFeature2 extends Feature("Guard Test 2") {
 	val hook = GuardHook[String]("Test guards 2")
-	def name = "Guard Test Feature 2"
-	override def depend = Nil
 	
 	def init() {
 		hook.register(m => m == "foo")
