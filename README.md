@@ -30,9 +30,8 @@ You can run the following commands in the Scala REPL.
 3. Create a feature that attaches a callback to that hook:
 
     ```scala
-    object MyFeature extends Feature {
-      val name = "My Feature"
-      def init (implicit cb: ContextBuilder) {
+    object MyFeature extends Feature("My Feature") {
+      def init () {
         nameFilter.register { name =>
           val words = name.split(" ").toList
           val words2 = (words.last+",") :: words.init
