@@ -37,14 +37,13 @@ object LS {
     var features = new ListBuffer[Feature]()
     args foreach { arg =>
       arg match {
-        case "-v" => features += Verbose
-        case "-a" => features += AllFiles
-        case "-l" => features += LongFormat
-        case "-c" => features += ColourOutput
-        case "-h" => features += HumanUnits
-        case "-s" => features += SIUnits
+        case "-v"  => features += Verbose
+        case "-a"  => features += AllFiles
+        case "-l"  => features += LongFormat
+        case "-c"  => features += ColourOutput
+        case "-h"  => features += HumanUnits
         case "-si" => features += SIUnits
-        case p    => path = p
+        case p     => path = p
       }
     }
     features.toList
@@ -52,11 +51,10 @@ object LS {
   
   def run(flags: List[Feature]) = FeatureRepository.usingFeatures(flags) {
     println()
-    val verbose = HookContext.get.hasFeature(Verbose)
-    if (verbose) println("Features: "+HookContext.get.features.map(_.name).mkString(", "))
+    if (Verbose.isActive) println("Features: "+HookContext.get.features.map(_.name).mkString(", "))
     
     val dir = new File(path).getCanonicalFile()
-    if (verbose) println(dir.getAbsolutePath())
+    if (Verbose.isActive) println(dir.getAbsolutePath())
       
     val files = fileGuard(dir.listFiles().toList)
     println(if (HookContext.get.hasFeature(LongFormat))
@@ -66,7 +64,7 @@ object LS {
   }
   
   val dateFormat = new SimpleDateFormat("d MMM yyyy")
-  val timeFormat = new SimpleDateFormat("HH:mm:ss")
+  val timeFormat = new SimpleDateFormat("H:mm:ss")
     
   def longFormat(files: List[File]): String = {
     case class Item(name: String, ftype: String, permissions: String, size: String, date: String, time: String)
@@ -92,7 +90,8 @@ object LS {
       val time = timeFormat.format(mod)
       
       val size = if (isDirectory) "-"
-        else if (HookContext.get.hasFeature(HumanUnits)) HumanUnits(file.length()) 
+        else if (HumanUnits.isActive) HumanUnits(file.length()) 
+        else if (SIUnits.isActive) SIUnits(file.length()) 
         else file.length().toString()
       
       Item(name, ftype, permissions, size, date, time)
@@ -105,7 +104,7 @@ object LS {
     val lines = for (item <- items) yield {
       val paddedSize = padl(item.size, sizepad)
       val paddedDate = padl(item.date, datepad)
-      val paddedTime = padr(item.time, timepad)
+      val paddedTime = padl(item.time, timepad)
       "  "+item.ftype+item.permissions+"   "+paddedDate+" "+paddedTime+"   "+paddedSize+"   "+item.name
     }
     lines.mkString("\n")
@@ -132,7 +131,7 @@ object LS {
 //  features
 object DefaultFeatures extends Feature("Default Features") {
   def init() {
-    if (!ContextBuilder.get.hasFeature(AllFiles))
+    if (!AllFiles.isActive)
       LS.fileGuard.register(f => !f.getName().startsWith("."))
   }
 }
@@ -158,7 +157,7 @@ object ColourOutput extends Feature("Colour output") {
     if (terminal.isANSISupported()) {
       LS.filenameFilter.register { (name, file) =>
         import ANSIBuffer.ANSICodes._
-        if (HookContext.get.hasFeature(Verbose)) println("Colours for "+name)
+        if (Verbose.isActive) println("Colours for "+name)
         if (FileUtils.isSymlink(file))
           attrib(36)+name+attrib(37)
         else if (file.isDirectory())
@@ -166,7 +165,7 @@ object ColourOutput extends Feature("Colour output") {
         else
           name
       }
-    } else if (HookContext.get.hasFeature(Verbose)) println("Cannot show colours")
+    } else if (Verbose.isActive) println("Cannot show colours")
   }
 }
 
@@ -177,8 +176,22 @@ object HumanUnits extends Feature("Human readable units", depend=List(LongFormat
   def apply(len: Long) = FileUtils.byteCountToDisplaySize(len).replaceAll("KB", "kB")
 }
 
-object SIUnits extends Feature("SI units") {
+object SIUnits extends Feature("SI units", depend=List(LongFormat)) {
   def init() {
+  }
+  
+  def apply(len: Long): String = {
+    val units = Array(" bytes", " kB", " MB", " GB", " TB")
+    def scaleOf(len: Long): Int = if (len >= 1000L) 1+scaleOf(len / 1000L) else 0
+    val scale = scaleOf(len)
+    if (Verbose.isActive) println("Number scale: "+scale)
+    val mul = math.pow(1000L, scale)
+    val num = {
+      val num = String.format("%.3g", Double.box(len.toDouble/mul))
+      num.replaceAll("0$|^0", "").replaceAll("\\.$", "")
+    }
+
+    num+units(scale)
   }
 }
 

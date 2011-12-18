@@ -20,6 +20,7 @@ abstract class FeatureLike(
 ){
 	def init()
   override def toString = name
+  def isActive = HookContext.get.hasFeature(this)
   def _depend = (require ::: depend).filterNot( _ == null )
   def _before = before.filterNot( _ == null )
   def _after = after.filterNot( _ == null )
