@@ -6,6 +6,7 @@ import scala.util.DynamicVariable
 object HookContext {
   def dummy() = new HookContextBuilderImpl(Nil)
   val contextVar = new DynamicVariable[HookContext](dummy())
+  def get = contextVar.value
   def apply[R](f: (HookContext) => R): R = contextVar(f)
 }
 
@@ -17,47 +18,20 @@ trait HookContext {
   
   def using[R](f: => R): R = HookContext.contextVar.withValue(this)(f)
   
-  //  mutations: local-variant contexts
-  /*
-  //def stacked[R](f: => R) = HookContext.stack.using(this)(f)
-  def mutate = new HookContextMutant(new HookContextBuilderImpl(Nil), this)
-  
-  def local[R](f: (ContextBuilder) => R) = f(mutate)
-  
-  //def localStacked[R](f: => R) = mutate.stacked(f)
-  
-  def local[R](f: (ContextBuilder) => Unit)(g: (HookContext) => R) = {
-    val mutant = mutate
-    f(mutant)
-    val fixed = mutant.fix
-    g(fixed)
-  }
-  def localStacked[R](f: => Unit)(g: => R) = {
-    val mutant = mutate
-    mutant.stacked(f)
-    val fixed = mutant.fix
-    fixed.stacked(g)
-  }
-  
-  def local[C, R](f: (ContextBuilder) => C)(g: (C) => (HookContext) => R) = {
-    val mutant = mutate
-    val carry: C = f(mutant)
-    val fixed = mutant.fix
-    g(carry)(fixed)
-  }
-  def localStacked[C, R](f: => C)(g: (C) => R) = {
-    val mutant = mutate
-    val carry: C = mutant.stacked(f)
-    val fixed = mutant.fix
-    fixed.stacked(g(carry))
-  }
-  */
+  //  temporary state
+  def mutate: ContextBuilder = new HookContextMutant(new HookContextBuilderImpl(Nil), this)
 }
 
 object ContextBuilder {
-  val builderVar = new DynamicVariable[ContextBuilder](HookContext.dummy)
-  def apply[R](f: (ContextBuilder) => R): R = builderVar(f)
+  val builderVar = new DynamicVariable[ContextBuilder](null)
+  def get = builderVar.value
+  def apply[R](f: (ContextBuilder) => R): R = {
+    if (builderVar.value == null) throw new ContextBuilderStateException("No mutable context builder active")
+    builderVar(f)
+  }
 }
+
+class ContextBuilderStateException(message: String) extends NullPointerException(message)
 
 trait ContextBuilder extends HookContext {
   def register[S](hook: Hook[S], value: S): Unit
@@ -81,6 +55,10 @@ class HookContextBuilderImpl (val features: List[FeatureLike]) extends ContextBu
   }
   def hasRegistered[S](hook: Hook[S]) = !getValues(hook).isEmpty
   def get[S](hook: Hook[S]) = getValues(hook).toList
+  
+  def init(features: List[FeatureLike]) {
+  
+  }
 }
 
 case class HookContextImpl (
@@ -96,14 +74,4 @@ class HookContextMutant (mutation: HookContextBuilderImpl, base: HookContext) ex
   def register[S](hook: Hook[S], value: S) = mutation.register(hook, value)
   def hasRegistered[S](hook: Hook[S]) = mutation.hasRegistered(hook) || base.hasRegistered(hook)
   def get[S](hook: Hook[S]) = mutation.get(hook) ::: base.get(hook)
-  def fix: HookContext = throw new UnsupportedOperationException
-  /*
-  def fix: HookContext = {
-    val mutantRegistry: Map[Hook[_], List[_]] = mutation.registry.toMap.mapValues(_.toList)
-    val combinedRegistry: Map[Hook[_], List[_]] = {
-      ...
-    }
-    new HookContextImpl(features, combinedRegistry)
-  }
-  */
 }

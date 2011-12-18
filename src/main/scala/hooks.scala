@@ -140,52 +140,32 @@ class StandaloneFilterHook0[V](name: String) extends StandaloneFilterHook[V, Nil
 
 //  A hook that selects just one of the registered objects
 object SelectableHook {
-  def apply[T](name: String)(selector: (List[T]) => Option[T]) = new SelectableHook0(name, selector)
-  def apply[T, S](name: String)(selector: (List[T], S) => Option[T]) = new SelectableHook(name, selector)
-  
+  def apply[M, T](name: String)(selector: (List[(M,T)]) => Option[T]) = new SelectableHook0(name, selector)
+  def apply[M, T, S](name: String)(selector: (List[(M, T)], S) => Option[T]) = new SelectableHook(name, selector)
+  /*
   object standalone {
-    def apply[T](name: String)(selector: (List[T]) => Option[T]) = new StandaloneSelectableHook0(name, selector)
-    def apply[T, S](name: String)(selector: (List[T], S) => Option[T]) = new StandaloneSelectableHook(name, selector)
-  }
+    def apply[T](name: String)(selector: (List[(M, T)]) => Option[T]) = new StandaloneSelectableHook0(name, selector)
+    def apply[T, S](name: String)(selector: (List[(M, T)], S) => Option[T]) = new StandaloneSelectableHook(name, selector)
+  }*/
 }
 
-/*
-class SimpleSelectableHook[T](name: String)(selector: (List[T]) => Option[T]) extends Hook[T](name) {
-  val guard = GuardHook.standalone[T](name+" (guard)")
-  def register(t: T) = _register(t)
+class SelectableHook[M, T, S](name: String, selector: (List[(M, T)], S) => Option[T]) extends Hook[(M, T)](name) {
+  val guard = GuardHook.standalone[(M, T), S](name+" (guard)")
+  def register(m: M)(t: T): Unit = _register((m, t))
   
-  def items: List[T] = guard(_get).toList
-  def apply() = selector(items, cx)
-}
-*/
-
-class SelectableHook[T, S](name: String, selector: (List[T], S) => Option[T]) extends Hook[T](name) {
-  val guard = GuardHook.standalone[T, S](name+" (guard)")
-  def register(t: T): Unit = _register(t)
-  
-  def items(extra: S): List[T] = guard(_get, extra).toList
+  def items(extra: S): List[(M, T)] = guard(_get, extra).toList
   def apply(extra: S): Option[T] = selector(items(extra), extra)
 }
 
-class SelectableHook0[T](name: String, selector: (List[T]) => Option[T]) extends SelectableHook[T, Nil.type](name, new SelectableHook0Adaptor(selector).apply _) {
+class SelectableHook0[M, T](name: String, selector: (List[(M, T)]) => Option[T]) extends SelectableHook[M, T, Nil.type](name, new SelectableHook0Adaptor[M, T](selector).apply _) {
   def apply(): Option[T] = apply(Nil)
 }
 
-class SelectableHook0Adaptor[T](selector: List[T] => Option[T]) {
-  def apply(items: List[T], nil: Nil.type): Option[T] = selector(items)
+class SelectableHook0Adaptor[M, T](selector: List[(M, T)] => Option[T]) {
+  def apply(items: List[(M, T)], nil: Nil.type): Option[T] = selector(items)
 }
 
 /*
-class SimpleStandaloneSelectableHook[T](name: String)(selector: (List[T]) => Option[T]) extends Hook[T](name) {
-  private val _items = new ListBuffer[T]()
-  val guard = GuardHook.standalone[T](name+" (guard)")
-  def register(t: T) = _items += t
-
-  def items: List[T] = guard(_items).toList
-  def apply() = selector(items)
-}
-*/
-
 class StandaloneSelectableHook[T, S](name: String, selector: (List[T], S) => Option[T]) extends Hook[T](name) {
   private val _items = new ListBuffer[T]()
   val guard = GuardHook.standalone[T, S](name+" (guard)")
@@ -201,7 +181,7 @@ class StandaloneSelectableHook0[T](name: String, selector: (List[T]) => Option[T
 
 class StandaloneSelectableHook0Adaptor[T](selector: (List[T]) => Option[T]) {
   def apply(items: List[T], nil: Nil.type): Option[T] = selector(items)
-}
+}*/
 
 
 //  A hook that collects fragments and assembles them into one string

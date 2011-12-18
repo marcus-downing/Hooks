@@ -14,21 +14,27 @@ abstract class FeatureLike(
   val name: String,
 	depend: => List[FeatureLike] = List.empty,
 	before: => List[FeatureLike] = List.empty,
-	after: => List[FeatureLike] = List.empty
+	after: => List[FeatureLike] = List.empty,
+  require: => List[FeatureLike] = List.empty,
+  delegateSecurity: => FeatureLike = null
 ){
 	def init()
   override def toString = name
-  def _depend = depend.filterNot( _ == null )
+  def _depend = (require ::: depend).filterNot( _ == null )
   def _before = before.filterNot( _ == null )
   def _after = after.filterNot( _ == null )
+  def _require = require.filterNot( _ == null )
+  def _delegateSecurity = Option(delegateSecurity)
 }
 
 abstract class Feature(
   name: String,
 	depend: => List[FeatureLike] = List.empty,
 	before: => List[FeatureLike] = List.empty,
-	after: => List[FeatureLike] = List.empty
-) extends FeatureLike (name, depend = depend, before = before, after = after)
+	after: => List[FeatureLike] = List.empty,
+  require: => List[FeatureLike] = List.empty,
+  delegateSecurity: => FeatureLike = null
+) extends FeatureLike (name, depend = depend, before = before, after = after, require = require, delegateSecurity = delegateSecurity)
 
 class FeatureDependencyException(edges: List[(FeatureLike, FeatureLike)]) extends Exception(FeatureDependencyException.message(edges))
 

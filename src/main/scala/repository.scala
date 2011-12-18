@@ -33,6 +33,17 @@ trait FeatureRepository {
   
   def usingFeatures[R](desiredFeatures: List[Feature])(f: => R): R = makeContext(desiredFeatures).using(f)
   def usingFeatures[R](desiredFeatures: List[Feature], token: Any)(f: => R): R = makeContext(desiredFeatures, token).using(f)
+  def useTemporaryState(): Unit = {
+    val context = HookContext.get.mutate
+    HookContext.contextVar.value = context
+    ContextBuilder.builderVar.value = context
+  }
+  def usingTemporaryState[R](f: => R): R = {
+    val context = HookContext.get.mutate
+    HookContext.contextVar.withValue(context) {
+      ContextBuilder.builderVar.withValue(context) { f }
+    }
+  }
   
   def copy = {
     val copy = new FeatureRepositoryImpl
