@@ -1,9 +1,11 @@
 package hooks.examples.ls
 
 import hooks._
+import scala.collection.mutable.ListBuffer
 import java.io.File
 import java.text.SimpleDateFormat
 import org.apache.commons.io.FileUtils
+import jline.{Terminal,ANSIBuffer}
 
 /**
  * Basic Application Example
@@ -23,17 +25,7 @@ object LS {
   
   // hooks
   val fileGuard = GuardHook[File]("File guard")
-  //val formatterSelect = SelectableHook[(Int, List[File] => String)]("Formatter") { fs => fs.head }
-  //val unitFormatterSelect = SelectableHook[Int => String]("Unit formatter") { ufs => Some(ufs.head) }
-  //val filenameFormatterSelect = SelectableHook[String => String]("File name formatter") { fnfs => Some(fnfs.head) }
-  
-  //val unitFormat = FilterHook[S
-  val filenameFilter = FilterHook[String]("Filenames")
-  
-  val begin = ActionHook.simple("Begin")
-  val before = ActionHook.simple("Before")
-  val after = ActionHook.simple("After")
-  val end = ActionHook.simple("Done")  
+  val filenameFilter = FilterHook[String, File]("Filenames")
   
   //  application
   def registerFeatures () {
@@ -42,38 +34,35 @@ object LS {
   }
   
   def parseArgs(args: Array[String]): List[Feature] = {
-    def next(args: List[String]): List[Feature] = {
-      args match {
-        case "-v" :: tail => Verbose :: next(tail)
-        case "-a" :: tail => AllFiles :: next(tail)
-        case "-l" :: tail => LongFormat :: next(tail)
-        case "-c" :: tail => ColourOutput :: next(tail)
-        case "-h" :: tail => HumanUnits :: next(tail)
-        case "-s" :: tail => SIUnits :: next(tail)
-        case p :: tail =>
-          path = p
-          next(tail)
-        case Nil => Nil
+    var features = new ListBuffer[Feature]()
+    args foreach { arg =>
+      arg match {
+        case "-v" => features += Verbose
+        case "-a" => features += AllFiles
+        case "-l" => features += LongFormat
+        case "-c" => features += ColourOutput
+        case "-h" => features += HumanUnits
+        case "-s" => features += SIUnits
+        case "-si" => features += SIUnits
+        case p    => path = p
       }
     }
-    next(args.toList)
+    features.toList
   }
   
   def run(flags: List[Feature]) = FeatureRepository.usingFeatures(flags) {
-    begin()
+    println()
+    val verbose = HookContext.get.hasFeature(Verbose)
+    if (verbose) println("Features: "+HookContext.get.features.map(_.name).mkString(", "))
     
     val dir = new File(path).getCanonicalFile()
-    println()
-    //if (HookContext.get.hasFeature(LongFormat)) println(dir.getAbsolutePath())
+    if (verbose) println(dir.getAbsolutePath())
       
     val files = fileGuard(dir.listFiles().toList)
-    
     println(if (HookContext.get.hasFeature(LongFormat))
       longFormat(files)
     else
       shortFormat(files))
-    
-    end()
   }
   
   val dateFormat = new SimpleDateFormat("d MMM yyyy")
@@ -82,8 +71,7 @@ object LS {
   def longFormat(files: List[File]): String = {
     case class Item(name: String, ftype: String, permissions: String, size: String, date: String, time: String)
     val items = files map { file =>
-      val name = filenameFilter(file.getName())
-      //val isLink = file.getCanonicalPath() != file.getAbsolutePath()
+      val name = filenameFilter(file.getName(), file)
       val isLink = FileUtils.isSymlink(file)
       val isDirectory = file.isDirectory()
       
@@ -124,7 +112,7 @@ object LS {
   }
   
   def shortFormat(files: List[File]): String = {
-    val terminal = jline.Terminal.getTerminal()
+    val terminal = Terminal.getTerminal()
     val width = terminal.getTerminalWidth()
     
     val names = files.map(_.getName())
@@ -166,14 +154,27 @@ object LongFormat extends Feature("Long format") {
 
 object ColourOutput extends Feature("Colour output") {
   def init() {
+    val terminal = Terminal.getTerminal()
+    if (terminal.isANSISupported()) {
+      LS.filenameFilter.register { (name, file) =>
+        import ANSIBuffer.ANSICodes._
+        if (HookContext.get.hasFeature(Verbose)) println("Colours for "+name)
+        if (FileUtils.isSymlink(file))
+          attrib(36)+name+attrib(37)
+        else if (file.isDirectory())
+          attrib(32)+name+attrib(37)
+        else
+          name
+      }
+    } else if (HookContext.get.hasFeature(Verbose)) println("Cannot show colours")
   }
 }
 
-object HumanUnits extends Feature("Human readable units") {
+object HumanUnits extends Feature("Human readable units", depend=List(LongFormat)) {
   def init() {
   }
   
-  def apply(len: Long) = FileUtils.byteCountToDisplaySize(len)
+  def apply(len: Long) = FileUtils.byteCountToDisplaySize(len).replaceAll("KB", "kB")
 }
 
 object SIUnits extends Feature("SI units") {
