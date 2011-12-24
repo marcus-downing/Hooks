@@ -20,6 +20,16 @@ class HookSpec extends Spec {
           assert(strings.contains("foo") && strings.contains("bar") && strings.length == 2)
         }
 			}
+			
+			it("should store components standalone") {
+				val repo = FeatureRepository()
+				repo.require(ComponentTestFeature)
+				repo.makeContext(Nil).using {
+          val strings = ComponentTestFeature.hook._get
+          println("#19: "+strings.mkString(", "))
+          assert(strings.contains("foo") && strings.contains("bar") && strings.length == 2)
+        }
+			}
 		}
 		
 		describe("with simple filters") {
@@ -257,11 +267,20 @@ class HookSpec extends Spec {
 }
 
 object ComponentTestFeature extends Feature("Component Test") {
-	val hook = new ComponentHook[String]("Test components")
+	val hook = ComponentHook[String]("Test components")
 	
 	def init() {
 		hook.register("foo")
 		hook.register("bar")
+	}
+}
+
+object ComponentTestFeature2 extends Feature("Component Test 2") {
+	val hook = ComponentHook.standalone[String]("Test components 2")
+  hook.register("foo")
+	hook.register("bar")
+	
+	def init() {
 	}
 }
 

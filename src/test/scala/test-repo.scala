@@ -7,7 +7,7 @@ import hooks._
 class RepoSpec extends Spec {
   describe("A dummy context") {
     it("should store hook") {
-      HookContext.dummy().using {
+      HookContext.usingDummy {
         val hook = FilterHook[String]("Dummy test")
         hook.register(v => "bar")
         val result = hook("foo")

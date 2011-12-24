@@ -4,33 +4,56 @@ package hooks
 import Imports._
 import scala.Product
 import scala.collection.mutable.{ListBuffer}
+import scala.reflect.{Manifest, ClassManifest}
 
-
-/**
- * Hooks
- *
- * These objects identify and provide access to the collected functions and objects
- * attached to them.
- */
-
+/** Base class of all the hooks. You probably don't need to use this class directly.
+  *
+  * The `Hook` class provides the basic ability to store and retrieve behaviours of the given type
+  * within the current context. New behaviour can only be added during the initialisation phase.
+  *
+  * For details, see individual hooks.
+  * 
+  */
+  
 abstract class Hook[S](val name: String) {
+  /** Get all behaviours registered against this hook */
   def _get = HookContext { cx => cx.get(this) }
+  /** Register a behaviour against this hook */
   def _register(s: S) = ContextBuilder { cb => cb.register(this, s) }
-  //def _get: List[S] = for (cx: HookContext <- Option(HookContext.contextVar.value)) yield cx.get(this)
   def logErrors(f: => Unit) = try { f } catch { case x => x.printStackTrace }
+}
+
+/** Standalone hook base type. You do not need to use this class directly.
+  *
+  * Normally a hook can only be modified during the initilisation phase,
+  * because that's the only time that a mutable context can be located.
+  * Attempting to register behaviour with a hook at any other time
+  * will throw an exception.
+  * Standalone hooks bypass that restriction by wrapping the hook in a
+  * permanently mutable context.
+  *
+  * @define standalone this is a standalone version of the hook that does not depend on a context.
+  */
+abstract class StandaloneHook[S](val base: Hook[S]) extends Hook[S](base.name) {
+  val standaloneContext = HookContext.createDummy()
+  /** Perform some task using a dummy global context */
+  protected def standalone[R](f: => R): R = base.synchronized { standaloneContext.using { f } }
 }
 
 
 
-//  A hook that stores objects of a given type
+/**  A hook that collects objects of a given type.
+  */
 object ComponentHook {
   def apply[T](name: String) = new ComponentHook[T](name)
   
   object standalone {
-    def apply[T](name: String) = new ComponentHook[T](name)
+    def apply[T](name: String) = new StandaloneComponentHook(new ComponentHook[T](name))
   }
 }
 
+/** A hook that collects objects of a given type.
+  */
 class ComponentHook[T](name: String) extends Hook[T](name) {
   def register(t: T): Unit = _register(t)
   def apply() = _get
@@ -38,45 +61,33 @@ class ComponentHook[T](name: String) extends Hook[T](name) {
   def collect[S <: T] = _get.collect{ case s: S => s }
 }
 
-class StandaloneComponentHook[T](name: String) extends Hook[T](name) {
-  val _components = new ListBuffer[T]()
-  def register(t: T): Unit = _components += t
-  def apply() = _components.toList
-  def components = _components.toList
-  def collect[S <: T] = _components.collect{ case s: S => s }
+
+/** A hook that collects objects of a given type
+  * 
+  * @standalone
+  */
+class StandaloneComponentHook[T](base: ComponentHook[T]) extends StandaloneHook[T](base) {
+  def register(t: T) = standalone { base.register(t) }
+  def apply() = standalone { base() }
+  def components = standalone { base.components }
+  def collect[S <: T] = standalone { base.collect[S] }
 }
 
 
-//  A hook that fires an action
+/** A hook that fires actions.
+  */
 object ActionHook {  
   def simple(name: String) = new ActionHook0(name)
   def apply[A](name: String)(implicit d: D1) = new ActionHook[A](name)
   
   object standalone {
-    def simple(name: String) = new StandaloneActionHook0(name)
-    def apply[A](name: String)(implicit d: D1) = new StandaloneActionHook[A](name)
+    //def simple(name: String) = new StandaloneActionHook0(new ActionHook0(name))
+    def apply[A](name: String)(implicit d: D1) = new StandaloneActionHook[A](new ActionHook[A](name))
   }
 }
 
-
-class StandaloneActionHook[S](name: String) extends Hook[(S) => Unit](name) {
-  val actions = new ListBuffer[(S) => Unit]()
-  def register(f: (S) => Unit): Unit = actions += f
-  def register(fn: S => Unit)(implicit d: D1): Unit = actions += new Adapter1(fn).apply _
-  def register(fn: () => Unit)(implicit d: D3): Unit = actions += new Adapter2(fn).apply _
-  def register(fn: => Unit)(implicit d: D2): Unit = actions += new Adapter2(fn).apply _
-  
-  class Adapter1(fn: S => Unit) { def apply(s: S): Unit = fn(s) }
-  class Adapter2(fn: => Unit) { def apply(s: S): Unit = fn }
-  
-  //def delegate[Q >: S](target: StandaloneActionHook[Q]) = actions += target.apply _
-  
-  def apply(value: S): Unit = { for (action <- this.actions) logErrors { action(value) } }
-}
-
-class StandaloneActionHook0(name: String) extends StandaloneActionHook[Nil.type](name) {
-  def apply() { apply(Nil); }
-}
+/** A hook that fires actions.
+  */
 
 class ActionHook[S](name: String) extends Hook[S => Unit](name) {
   def register(fn: S => Unit): Unit = _register(fn)
@@ -90,9 +101,30 @@ class ActionHook[S](name: String) extends Hook[S => Unit](name) {
   def apply(s: S) { for (action <- actions) logErrors { action(s) } }
 }
 
+/** A hook that fires actions.
+  * This is a special case that's simpler than a normal `ActionHook`: it takes no event type.
+  */
+
 class ActionHook0(name: String) extends ActionHook[Nil.type](name) {
   def apply() { apply(Nil) }
 }
+
+/** A hook that fires actions.
+  * $standalone
+  */
+  
+class StandaloneActionHook[S](base: ActionHook[S]) extends StandaloneHook(base) {
+  def register(fn: S => Unit) = standalone { base.register(fn) }
+  def register(fn: => Unit) = standalone { base.register(fn) }
+  def actions = standalone { base.actions }
+  def apply(s: S) = standalone { base(s) }
+}
+
+/*
+class StandaloneActionHook0(base: ActionHook0) extends StandaloneActionHook(base) {
+  def apply() = standalone { base.apply() }
+}
+*/
 
 
 //  A hook that transforms a value
@@ -101,8 +133,8 @@ object FilterHook {
   def apply[V, S](name: String)(implicit d: D1) = new FilterHook[V, S](name)
   
   object standalone {
-    def apply[V](name: String) = new StandaloneFilterHook0[V](name)
-    def apply[V, S](name: String) = new StandaloneFilterHook[V, S](name)
+    //def apply[V](name: String) = new StandaloneFilterHook0(new FilterHook0[V](name))
+    def apply[V, S](name: String) = new StandaloneFilterHook(new FilterHook[V, S](name))
   }
 }
 
@@ -122,35 +154,33 @@ class FilterHook0[V](name: String) extends FilterHook[V, Nil.type](name: String)
   def apply(value: V): V = apply(value, Nil)
 }
 
-class StandaloneFilterHook[V, S](name: String) extends Hook[(V, S) => V](name) {
-  val _filters = new ListBuffer[(V, S) => V]()
-  def register(f: (V, S) => V): Unit = _filters += f
-  def register(f: (V) => V): Unit = _filters += new Adaptor2(f).filter _
-  
-  class Adaptor2(f: (V) => V) { def filter(v: V, s: S) = f(v) }
-  
-  def filters = _filters.toList
-  def apply(value: V, extra: S): V = filters.foldLeft(value) { (value, filter) => filter(value, extra) }
+class StandaloneFilterHook[V, S](base: FilterHook[V, S]) extends StandaloneHook(base) {
+  def register(f: (V, S) => V) = standalone { base.register(f) }
+  def register(f: (V) => V) = standalone { base.register(f) }
+  def filters = standalone { base.filters }
+  def apply(value: V, extra: S): V = standalone { base(value, extra) }
 }
 
-class StandaloneFilterHook0[V](name: String) extends StandaloneFilterHook[V, Nil.type](name: String) {
-  def apply(value: V): V = apply(value, Nil)
+/*
+class StandaloneFilterHook0[V](base: FilterHook0[V]) extends StandaloneFilterHook(base) {
+  def apply(value: V) = standalone { base(value) }
 }
+*/
 
 
 //  A hook that selects just one of the registered objects
 object SelectableHook {
   def apply[M, T](name: String)(selector: (List[(M,T)]) => Option[T]) = new SelectableHook0(name, selector)
   def apply[M, T, S](name: String)(selector: (List[(M, T)], S) => Option[T]) = new SelectableHook(name, selector)
-  /*
+  
   object standalone {
-    def apply[T](name: String)(selector: (List[(M, T)]) => Option[T]) = new StandaloneSelectableHook0(name, selector)
-    def apply[T, S](name: String)(selector: (List[(M, T)], S) => Option[T]) = new StandaloneSelectableHook(name, selector)
-  }*/
+    //def apply[M, T](name: String)(selector: (List[(M, T)]) => Option[T]) = new StandaloneSelectableHook0(new SelectableHook0[M, T](name, selector))
+    def apply[M, T, S](name: String)(selector: (List[(M, T)], S) => Option[T]) = new StandaloneSelectableHook(new SelectableHook[M, T, S](name, selector))
+  }
 }
 
 class SelectableHook[M, T, S](name: String, selector: (List[(M, T)], S) => Option[T]) extends Hook[(M, T)](name) {
-  val guard = GuardHook.standalone[(M, T), S](name+" (guard)")
+  val guard = GuardHook[(M, T), S](name+" (guard)")
   def register(m: M)(t: T): Unit = _register((m, t))
   
   def items(extra: S): List[(M, T)] = guard(_get, extra).toList
@@ -164,6 +194,19 @@ class SelectableHook0[M, T](name: String, selector: (List[(M, T)]) => Option[T])
 class SelectableHook0Adaptor[M, T](selector: List[(M, T)] => Option[T]) {
   def apply(items: List[(M, T)], nil: Nil.type): Option[T] = selector(items)
 }
+
+class StandaloneSelectableHook[M, T, S](base: SelectableHook[M, T, S]) extends StandaloneHook(base) {
+  val guard = new StandaloneGuardHook(base.guard)
+  def register(m: M)(t: T) = standalone { base.register(m)(t) }
+  def items(extra: S) = standalone { base.items(extra) }
+  def apply(extra: S) = standalone { base(extra) }
+}
+
+/*
+class StandaloneSelectableHook0[M, T](base: SelectableHook0[M, T]) extends StandaloneSelectableHook(base) {
+  def apply() = standalone { base() }
+}
+*/
 
 /*
 class StandaloneSelectableHook[T, S](name: String, selector: (List[T], S) => Option[T]) extends Hook[T](name) {
@@ -197,13 +240,13 @@ object BufferHook {
   def apply[T](name: String, f: (T) => String) = new BufferHook[T](name, "", "", "", f)
   
   object standalone {
-    def apply(name: String, prefix: String, infix: String, affix: String) = new StandaloneBufferHook[String](name, prefix, infix, affix, strid)
-    def apply(name: String, infix: String) = new StandaloneBufferHook[String](name, "", infix, "", strid)
-    def apply(name: String) = new StandaloneBufferHook[String](name, "", "", "", strid)
+    def apply(name: String, prefix: String, infix: String, affix: String) = new StandaloneBufferHook(new BufferHook[String](name, prefix, infix, affix, strid))
+    def apply(name: String, infix: String) = new StandaloneBufferHook(new BufferHook[String](name, "", infix, "", strid))
+    def apply(name: String) = new StandaloneBufferHook(new BufferHook[String](name, "", "", "", strid))
   
-    def apply[T](name: String, prefix: String, infix: String, affix: String, f: (T) => String) = new StandaloneBufferHook[T](name, prefix, infix, affix, f)
-    def apply[T](name: String, infix: String, f: (T) => String) = new StandaloneBufferHook[T](name, "", infix, "", f)
-    def apply[T](name: String, f: (T) => String) = new StandaloneBufferHook[T](name, "", "", "", f)
+    def apply[T](name: String, prefix: String, infix: String, affix: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](name, prefix, infix, affix, f))
+    def apply[T](name: String, infix: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](name, "", infix, "", f))
+    def apply[T](name: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](name, "", "", "", f))
   }
 }
 
@@ -224,6 +267,14 @@ class BufferHook[T](name: String, prefix: String, infix: String, affix: String, 
   }
 }
 
+class StandaloneBufferHook[T](base: BufferHook[T]) extends StandaloneHook(base) {
+  def add(f: => T) = standalone { base.add(f) }
+  def add(nested: BufferHook[_]) = standalone { base.add(nested) }
+  def fragments = standalone { base.fragments }
+  def apply = standalone { base.apply }
+}
+
+/*
 class StandaloneBufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]](name) {
   val _producers = new ListBuffer[() => String]()
   val earlyFilters = FilterHook.standalone[T](name+" (early filter)")
@@ -241,7 +292,7 @@ class StandaloneBufferHook[T](name: String, prefix: String, infix: String, affix
     strings.mkString(prefix, infix, affix)
   }
 }
-
+*/
 
 //  A hook that approves or rejects a value
 object GuardHook {
@@ -249,8 +300,8 @@ object GuardHook {
   def apply[T, S](name: String) = new GuardHook[T, S](name)
   
   object standalone {
-    def apply[T](name: String) = new StandaloneGuardHook0[T](name)
-    def apply[T, S](name: String) = new StandaloneGuardHook[T, S](name)
+    //def apply[T](name: String) = new StandaloneGuardHook0(new GuardHook0[T](name))
+    def apply[T, S](name: String) = new StandaloneGuardHook(new GuardHook[T, S](name))
   }
 }
 
@@ -278,43 +329,25 @@ class GuardHook0[T](name: String) extends GuardHook[T, Nil.type](name) {
   def apply(values: List[T]): List[T] = values.filter(v => this(v))
 }
 
-class StandaloneGuardHook[T, S](name: String) extends Hook[(T, S) => Boolean](name) {
-  val _guards = new ListBuffer[(T, S) => Boolean]()
+class StandaloneGuardHook[T, S](base: GuardHook[T, S]) extends StandaloneHook(base) {
+  def register(f: (T, S) => Boolean)(implicit d: D1) = standalone { base.register(f) }
+  def register(f: (T) => Boolean)(implicit d: D2) = standalone { base.register(f) }
   
-  def register(f: (T, S) => Boolean): Unit = _guards += f
-  def register(f: (T) => Boolean)(implicit d: D1): Unit = _guards += new Adaptor2(f).guard _
-  
-  class Adaptor2(f: (T) => Boolean) { def guard(t: T, s: S) = f(t) }
-  
-  def apply(value: T, extra: S): Boolean = {
-    val guards = _guards.toList
-    guards.isEmpty || guards.forall(g => g(value, extra))
-  }
+  def guards = standalone { base.guards }
+  def apply(value: T, extra: S) = standalone { base(value, extra) }
   def apply(values: Seq[T], extra: S): Seq[T] = values.filter(v => this(v, extra))
   def apply(values: Option[T], extra: S): Option[T] = values.filter(v => this(v, extra))
   def apply(values: List[T], extra: S): List[T] = values.filter(v => this(v, extra))
-  
-  lazy val sync = new SynchronizedStandaloneGuardHook(this)
 }
 
-class StandaloneGuardHook0[T](name: String) extends StandaloneGuardHook[T, Nil.type](name) {
-  def apply(value: T): Boolean = apply(value, Nil)
+/*
+class StandaloneGuardHook0[T](base: GuardHook0[T]) extends StandaloneGuardHook(base) {
+  def apply(value: T): Boolean = standalone { base(value) }
   def apply(values: Seq[T]): Seq[T] = values.filter(v => this(v))
   def apply(values: Option[T]): Option[T] = values.filter(v => this(v))
   def apply(values: List[T]): List[T] = values.filter(v => this(v))
 }
-
-class SynchronizedStandaloneGuardHook[T, S](inner: StandaloneGuardHook[T, S]) {
-  def guards = inner.synchronized { inner._guards.toList }
-  
-  def register(f: (T, S) => Boolean): Unit = inner.synchronized { inner.register(f) }
-  def register(f: (T) => Boolean): Unit = inner.synchronized { inner.register(f) }
-  
-  def apply(value: T, extra: S) = inner.synchronized { inner.apply(value, extra) }
-  def apply(values: Seq[T], extra: S): Seq[T] = values.filter(v => this(v, extra))
-  def apply(values: Option[T], extra: S): Option[T] = values.filter(v => this(v, extra))
-  def apply(values: List[T], extra: S): List[T] = values.filter(v => this(v, extra))
-}
+*/
 
 
 //  A hook that converts reversibly between two types, Inner and Outer
@@ -381,6 +414,62 @@ class LensHook[I, O, S](name: String) extends Hook[Dec](name) {
   }
 }
 */
+
+object ConverterHook {
+  //def apply[I, O](name: String) = new ConverterHook[I, O](name)
+  // def standalone[I, O](name: String) = new StandaloneConverterHook(new ConverterHook[I, O](name))
+  def precise[I,O](name: String) = new PreciseConverterHook[I, O](name)
+}
+
+/** A hook that converts values from one type to another.
+  *
+  * Register a variety of conversion functions against the hook,
+  * and it will select the most appropriate one to use.
+  *
+  * This hook takes two type parameters: `I` represents the input type and `O` represents the output type.
+  */
+class ConverterHook[I, O](name: String) extends Hook[I => Option[O]](name) {
+  def register[J <: I, Q <: O](f: J => Option[Q])(implicit mj: Manifest[J], mq: Manifest[Q]) = _register(new Adaptor(f, mj, mq).g _)
+  class Adaptor[J <: I, Q <: O](f: J => Option[Q], mj: Manifest[J], mq: Manifest[Q]) {
+    def g(i: I): Option[O] = if (mj >:> Manifest.singleType(i.asInstanceOf[AnyRef])) f(i.asInstanceOf[J]) else None
+  }
+  
+  def apply(i: I): Option[O] = _get.view.flatMap(_(i)).headOption
+  def apply(i: Option[I]): Option[O] = i.flatMap(j => apply(j))
+}
+
+
+class StandaloneConverterHook[I, O](base: ConverterHook[I, O]) extends StandaloneHook(base) {
+  def register[J <: I, Q <: O](f: J => Option[Q])(implicit mj: Manifest[J], mq: Manifest[Q]) = standalone { base.register(f) }
+
+  def apply(i: I) = standalone { base(i) }
+  def apply(i: Option[I]) = standalone { base(i) }
+}
+
+
+class PreciseConverterHook[I, O](name: String) extends Hook[I => Option[O]](name) {
+  def register(f: I => Option[O]) = _register(f)
+  def apply(i: I): Option[O] = _get.view.flatMap(_(i)).headOption
+  def apply(i: Option[I]): Option[O] = i.flatMap(j => apply(j))
+}
+
+
+/** A hook that converts values both ways between two types.
+  *
+  * Register a variety of encoder and decoder functions against the hook,
+  * and it will select the most appropriate one to use.
+  */
+/*
+class LensHook[I, O](name: String) extends Hook[Unit](name) {
+  val dec = ConverterHook[I, O](name+" (dec)")
+  val enc = ConverterHook[O, I](name+" (enc)")
+  
+  //def decode(o: O): Option[I] = 
+  //def registerDecoder[J, Q](d: J => Option[Q])(implicit mj: Manifest[J], mq: Manifest[Q]) = dec.register(e)
+  //def registerEncoder[Q, J](e: Q => Option[J])(implicit mq: Manifest[Q], mj: Manifest[J]) = enc.register(e)
+}
+*/
+
 
 
 object ResourceTrackerHook {
@@ -492,4 +581,5 @@ class BufferHookB[I, O](name: String, reduce: (List[I]) => O) extends Hook[ => I
 
 class BufferHookC[T](name: String, reduce: (List[T]) => T) extends BufferHookB[T, T](name, reduce) {
   
-}*/
+}
+*/

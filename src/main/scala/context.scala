@@ -3,12 +3,19 @@ package hooks
 import scala.collection.mutable.{HashMap, ListBuffer}
 import scala.util.DynamicVariable
 
+/** You do not normally need to use a `HookContext` directly.
+  */
+
 object HookContext {
-  def dummy() = new HookContextBuilderImpl(Nil)
-  val contextVar = new DynamicVariable[HookContext](dummy())
+  def createDummy() = new HookContextBuilderImpl(Nil)
+  def usingDummy[R](f: => R) = createDummy().using(f)
+  val contextVar = new DynamicVariable[HookContext](createDummy())
   def get = contextVar.value
   def apply[R](f: (HookContext) => R): R = contextVar(f)
 }
+
+/** You do not normally need to use a `HookContext` directly.
+  */
 
 trait HookContext {
   def features: List[FeatureLike]
@@ -22,14 +29,25 @@ trait HookContext {
   def mutate: ContextBuilder = new HookContextMutant(new HookContextBuilderImpl(Nil), this)
 }
 
+/** You do not normally need to use a `HookContext` or `ContextBuilder` directly.
+  */
+
 object ContextBuilder {
   val builderVar = new DynamicVariable[ContextBuilder](null)
   def get = builderVar.value
   def apply[R](f: (ContextBuilder) => R): R = {
-    if (builderVar.value == null) throw new ContextBuilderStateException("No mutable context builder active")
+    if (builderVar.value == null) throw new ContextBuilderStateException("Cannot register new behaviour outside the initialisation phase")
     builderVar(f)
   }
 }
+
+/** An exception raised when no context builder can be found.
+  * This usually indicates that you attempted to register behaviours against a hook outside of the initialisation phase.
+  * 
+  * There are two solutions to this:
+  * 1. Use the hook from within the `init` method of a feature
+  * 2. Use a standalone hook
+  */
 
 class ContextBuilderStateException(message: String) extends NullPointerException(message)
 

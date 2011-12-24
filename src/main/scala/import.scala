@@ -2,21 +2,15 @@
 
 import scala.util.DynamicVariable
 
-/**
- * Helper functions
- * These implicit conversions are loaded with the hooks package
+/* Hooks package
  */
 
 package object hooks {
-  //import ApplicableVariable.dynamicVariable2applicable
   implicit def pimpDynamicVariable[T](dv: DynamicVariable[T]) = new PimpDynamicVariable[T](dv)
-  //implicit def dymamicVariable2Option[T](dv: DynamicVariable[T]): Option[T] = Option(dv.value)
-  //implicit def dymamicVariable2Option[T](dv: DynamicVariable[T]): List[T] = Option(dv.value).toList
 
-  /**
-   * Helper imports
-   * These implicits are used in the hooks themselves to disambiguate
-   */
+  /** This object contains implicits that are used in the hooks themselves to disambiguate similar methods.
+    * You do not need to use this directly.
+    */
 
   object Imports {
     //  dummy implicits 0-F

@@ -2,15 +2,9 @@ package hooks
 
 import scala.collection.mutable.{HashMap, ListBuffer}
 
-/**
- * Feature Repository and Hook Context
- *
- * A repository is a store of all the potential features registered.
- * You can use either the FeatureRepository object, or create an instance.
- *
- * A context is a collection of activated features, and the hooks they've initialised.
- * The context you create should be passed around as an implicit value.
- */
+/** A repository is a store of all the potential features registered.
+  * You can use either the FeatureRepository object, or create an instance.
+  */
  
 trait FeatureRepository {
   def plugins: List[Plugin]
@@ -52,6 +46,10 @@ trait FeatureRepository {
     copy
   }
 }
+
+/** A concrete implementation of a Feature repository
+  *
+  */
 
 class FeatureRepositoryImpl extends FeatureRepository {
   val _registeredPlugins = ListBuffer[Plugin]()
@@ -157,6 +155,11 @@ class FeatureRepositoryImpl extends FeatureRepository {
   }
 }
 
+/** A wrapper around a feature repository to enable it to be used on different threads.
+  * This can have performance implications and potentially even cause deadlocks,
+  * so only use it if you really know what you're doing.
+  */
+
 class SynchronizedFeatureRepository(val inner: FeatureRepositoryImpl) extends FeatureRepository {
   def plugins = inner.synchronized { inner.plugins }
   def features = inner.synchronized { inner.features }
@@ -172,8 +175,12 @@ class SynchronizedFeatureRepository(val inner: FeatureRepositoryImpl) extends Fe
   def makeContext(desiredFeatures: List[Feature], token: Any) =
     inner.synchronized { inner.makeContext(desiredFeatures, token) }
     
-  val securityGuard = inner.synchronized { inner.securityGuard.sync }
+  val securityGuard = inner.synchronized { inner.securityGuard }
 }
+
+/** The `FeatureRepository` object is itself a `FeatureRepository`, one that's
+  * globally available. This is what you'll normally use.
+  */
 
 object FeatureRepository extends FeatureRepository {
   val instance = new SynchronizedFeatureRepository(new FeatureRepositoryImpl)
