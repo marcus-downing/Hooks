@@ -1,5 +1,10 @@
 **Hooks** provides a way for Scala programs to support plugins and optional features.
 
+![Warning](http://www.minotaur.cc/warning.png)
+
+**Under development**
+The Hooks library is still being developed. Details will change before it's ready for release.
+
 ## Extend your code
 
 Annotate your code with special hooks:
