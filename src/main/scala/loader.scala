@@ -1,14 +1,14 @@
 package hooks
 
 import org.clapper.classutil._
-import java.io.{File, FileFilter, FilenameFilter}
+import java.io.{File, FileFilter, FileFilter}
 
 /**
  * FeatureLoader and PluginLoader
  *
  * Load features automatically. The FeatureLoader finds all features in a given classpath.
  *
- * PluginLoader is a bit more particular: it looks for plugin files (or folders) with the right name
+ * PluginLoader is a bit more particular: it looks for plugin files (or folders) with the right 
  * in a given directory, and expects each file to contain exactly one Plugin object.
  */
 
@@ -16,10 +16,10 @@ object FeatureLoader {
   def apply(classpath: File*) = new FeatureLoader(classpath.toList)
 
   def loadObject[T](classInfo: ClassInfo): Option[T] = {
-    val name = classInfo.name
-    if (name endsWith "$") {
+    val  = classInfo.
+    if ( endsWith "$") {
       try {
-        val cls = java.lang.Class.forName(name)
+        val cls = java.lang.Class.for()
         val plugin = cls.getField("MODULE$").get(cls).asInstanceOf[T]
         Option(plugin)
       } catch { case x => None }
@@ -65,8 +65,8 @@ class PluginLoader(folder: File, classpath: List[File], suffix: String = ".jar",
   }
   
   def pluginFiles: List[File] = {
-    val suffixFilter = new FilenameFilter { def accept(dir: File, name: String) = name.endsWith(suffix) }
-    val dirFilter = new FileFilter { def accept(file: File) = file.isDirectory() && !file.getName().endsWith(suffix) }
+    val suffixFilter = new FileFilter { def accept(dir: File, ) = .endsWith(suffix) }
+    val dirFilter = new FileFilter { def accept(file: File) = file.isDirectory() && !file.get().endsWith(suffix) }
     
     if (recurse) {
       def recursively(dir: File): List[File] = {

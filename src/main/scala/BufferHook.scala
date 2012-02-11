@@ -82,7 +82,7 @@ implicit val xmlCollate(buffer: Buffer[Node]): String = {
 */
 
 /*
-class BufferHook[T](name: String, profile: BufferProfile[T]) extends Hook[=> T] {
+class BufferHook[T](profile: BufferProfile[T]) extends Hook[=> T] {
   
   def add(f: => T): Unit = _register(f)
   def add(b: BufferHook[T]): Unit = _register(b.apply)

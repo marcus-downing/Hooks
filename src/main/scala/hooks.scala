@@ -15,7 +15,7 @@ import scala.reflect.{Manifest, ClassManifest}
   * 
   */
   
-abstract class Hook[S](val name: String) {
+abstract class Hook[S]() {
   /** Get all behaviours registered against this hook */
   def _get = HookContext { cx => cx.get(this) }
   /** Register a behaviour against this hook */
@@ -34,7 +34,7 @@ abstract class Hook[S](val name: String) {
   *
   * @define standalone This is a standalone version of the hook that does not depend on a context.
   */
-abstract class StandaloneHook[S](val base: Hook[S]) extends Hook[S](base.name) {
+abstract class StandaloneHook[S](val base: Hook[S]) extends Hook[S](base.) {
   val standaloneContext = HookContext.createDummy()
   /** Perform some task using a dummy global context */
   protected def standalone[R](f: => R): R = base.synchronized { standaloneContext.using { f } }
@@ -45,28 +45,28 @@ abstract class StandaloneHook[S](val base: Hook[S]) extends Hook[S](base.name) {
 object BufferHook {
   def strid(v: String) = v
   
-  def apply(name: String, prefix: String, infix: String, affix: String) = new BufferHook[String](name, prefix, infix, affix, strid)
-  def apply(name: String, infix: String) = new BufferHook[String](name, "", infix, "", strid)
-  def apply(name: String) = new BufferHook[String](name, "", "", "", strid)
+  def apply(prefix: String, infix: String, affix: String) = new BufferHook[String](prefix, infix, affix, strid)
+  def apply(infix: String) = new BufferHook[String]("", infix, "", strid)
+  def apply() = new BufferHook[String]("", "", "", strid)
   
-  def apply[T](name: String, prefix: String, infix: String, affix: String, f: (T) => String) = new BufferHook[T](name, prefix, infix, affix, f)
-  def apply[T](name: String, infix: String, f: (T) => String) = new BufferHook[T](name, "", infix, "", f)
-  def apply[T](name: String, f: (T) => String) = new BufferHook[T](name, "", "", "", f)
+  def apply[T](prefix: String, infix: String, affix: String, f: (T) => String) = new BufferHook[T](prefix, infix, affix, f)
+  def apply[T](infix: String, f: (T) => String) = new BufferHook[T]("", infix, "", f)
+  def apply[T](f: (T) => String) = new BufferHook[T]("", "", "", f)
   
   object standalone {
-    def apply(name: String, prefix: String, infix: String, affix: String) = new StandaloneBufferHook(new BufferHook[String](name, prefix, infix, affix, strid))
-    def apply(name: String, infix: String) = new StandaloneBufferHook(new BufferHook[String](name, "", infix, "", strid))
-    def apply(name: String) = new StandaloneBufferHook(new BufferHook[String](name, "", "", "", strid))
+    def apply(prefix: String, infix: String, affix: String) = new StandaloneBufferHook(new BufferHook[String](prefix, infix, affix, strid))
+    def apply(infix: String) = new StandaloneBufferHook(new BufferHook[String]("", infix, "", strid))
+    def apply() = new StandaloneBufferHook(new BufferHook[String]("", "", "", strid))
   
-    def apply[T](name: String, prefix: String, infix: String, affix: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](name, prefix, infix, affix, f))
-    def apply[T](name: String, infix: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](name, "", infix, "", f))
-    def apply[T](name: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](name, "", "", "", f))
+    def apply[T](prefix: String, infix: String, affix: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T](prefix, infix, affix, f))
+    def apply[T](infix: String, f: (T) => String) = new StandaloneBufferHook(new BufferHook[T]("", infix, "", f))
+    def apply[T](f: (T) => String) = new StandaloneBufferHook(new BufferHook[T]("", "", "", f))
   }
 }
 
-class BufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]](name) {
-  val earlyFilters = FilterHook[T](name+" (early filter)")
-  val lateFilters = FilterHook[String](name+" (late filter)")
+class BufferHook[T](prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]]() {
+  val earlyFilters = FilterHook[T](+" (early filter)")
+  val lateFilters = FilterHook[String](+" (late filter)")
 
   def add(f: => T): Unit = _register(new Adaptor2(f).render _)
   def add(nested: BufferHook[_]): Unit = _register(new NestAdaptor(nested).render _)
@@ -90,10 +90,10 @@ class StandaloneBufferHook[T](base: BufferHook[T]) extends StandaloneHook(base) 
 
 
 /*
-class StandaloneBufferHook[T](name: String, prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]](name) {
+class StandaloneBufferHook[T](prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]]() {
   val _producers = new ListBuffer[() => String]()
-  val earlyFilters = FilterHook.standalone[T](name+" (early filter)")
-  val lateFilters = FilterHook.standalone[String](name+" (late filter)")
+  val earlyFilters = FilterHook.standalone[T](+" (early filter)")
+  val lateFilters = FilterHook.standalone[String](+" (late filter)")
 
   def add(f: => T): Unit = _producers += (new Adaptor(f).render _)
   def add(nested: StandaloneBufferHook[_]): Unit = _producers += (new NestAdaptor(nested).render _)
@@ -113,11 +113,11 @@ class StandaloneBufferHook[T](name: String, prefix: String, infix: String, affix
 //  decode() produces an Outer value from an Inner
 //  encode() combines the Outer value with an original Inner to produce a revised Inner
 /*
-class SimpleLensHook[I, O](name: String) extends Hook[Dec](name) {
+class SimpleLensHook[I, O]() extends Hook[Dec]() {
   type Dec = (I) => O
   type Enc = (O, I) => I
   
-  class Counterpart extends Hook[Enc](name) {
+  class Counterpart extends Hook[Enc]() {
     def decode = LensHook.this.encode
     def encode = LensHook.this.decode
     def counterpart = LensHook.this
@@ -143,11 +143,11 @@ class SimpleLensHook[I, O](name: String) extends Hook[Dec](name) {
   }
 }
 
-class LensHook[I, O, S](name: String) extends Hook[Dec](name) {
+class LensHook[I, O, S]() extends Hook[Dec]() {
   type Dec = (I, S) => (HookContext) => O
   type Enc = (O, I, S) => (HookContext) => I
   
-  class Counterpart extends Hook[Enc](name) {
+  class Counterpart extends Hook[Enc]() {
     def decode = LensHook.this.encode
     def encode = LensHook.this.decode
     def counterpart = LensHook.this
@@ -175,9 +175,9 @@ class LensHook[I, O, S](name: String) extends Hook[Dec](name) {
 */
 
 object ConverterHook {
-  //def apply[I, O](name: String) = new ConverterHook[I, O](name)
-  // def standalone[I, O](name: String) = new StandaloneConverterHook(new ConverterHook[I, O](name))
-  def precise[I,O](name: String) = new PreciseConverterHook[I, O](name)
+  //def apply[I, O]() = new ConverterHook[I, O]()
+  // def standalone[I, O]() = new StandaloneConverterHook(new ConverterHook[I, O]())
+  def precise[I,O]() = new PreciseConverterHook[I, O]()
 }
 
 /** A hook that converts values from one type to another.
@@ -187,7 +187,7 @@ object ConverterHook {
   *
   * This hook takes two type parameters: `I` represents the input type and `O` represents the output type.
   */
-class ConverterHook[I, O](name: String) extends Hook[I => Option[O]](name) {
+class ConverterHook[I, O]() extends Hook[I => Option[O]]() {
   def register[J <: I, Q <: O](f: J => Option[Q])(implicit mj: Manifest[J], mq: Manifest[Q]) = _register(new Adaptor(f, mj, mq).g _)
   class Adaptor[J <: I, Q <: O](f: J => Option[Q], mj: Manifest[J], mq: Manifest[Q]) {
     def g(i: I): Option[O] = if (mj >:> Manifest.singleType(i.asInstanceOf[AnyRef])) f(i.asInstanceOf[J]) else None
@@ -206,7 +206,7 @@ class StandaloneConverterHook[I, O](base: ConverterHook[I, O]) extends Standalon
 }
 
 
-class PreciseConverterHook[I, O](name: String) extends Hook[I => Option[O]](name) {
+class PreciseConverterHook[I, O]() extends Hook[I => Option[O]]() {
   def register(f: I => Option[O]) = _register(f)
   def apply(i: I): Option[O] = _get.view.flatMap(_(i)).headOption
   def apply(i: Option[I]): Option[O] = i.flatMap(j => apply(j))
@@ -219,9 +219,9 @@ class PreciseConverterHook[I, O](name: String) extends Hook[I => Option[O]](name
   * and it will select the most appropriate one to use.
   */
 /*
-class LensHook[I, O](name: String) extends Hook[Unit](name) {
-  val dec = ConverterHook[I, O](name+" (dec)")
-  val enc = ConverterHook[O, I](name+" (enc)")
+class LensHook[I, O]() extends Hook[Unit]() {
+  val dec = ConverterHook[I, O](+" (dec)")
+  val enc = ConverterHook[O, I](+" (enc)")
   
   //def decode(o: O): Option[I] = 
   //def registerDecoder[J, Q](d: J => Option[Q])(implicit mj: Manifest[J], mq: Manifest[Q]) = dec.register(e)
@@ -232,9 +232,9 @@ class LensHook[I, O](name: String) extends Hook[Unit](name) {
 
 
 object ResourceTrackerHook {
-  def apply[T, ID](name: String) = new ResourceTrackerHook[T, ID](name)
+  def apply[T, ID]() = new ResourceTrackerHook[T, ID]()
   object standalone {
-    def apply[T, ID](name: String) = new StandaloneResourceTrackerHook[T, ID](name)
+    def apply[T, ID]() = new StandaloneResourceTrackerHook[T, ID]()
   }
 }
 
@@ -242,7 +242,7 @@ class ResourceProvider[T, ID](val id: Option[ID], open_fn: => T, val close: (T) 
   def open() = open_fn
 }
 
-class ResourceTrackerHook[T, ID](name: String) extends Hook[ResourceProvider[T, ID]](name) {
+class ResourceTrackerHook[T, ID]() extends Hook[ResourceProvider[T, ID]]() {
   type P = ResourceProvider[T, ID]
   def providers = _get
   
@@ -260,7 +260,7 @@ class ResourceTrackerHook[T, ID](name: String) extends Hook[ResourceProvider[T, 
   def tracker = new ResourceTracker(_list)
 }
 
-class StandaloneResourceTrackerHook[T, ID](name: String) extends Hook[ResourceProvider[T, ID]](name) {
+class StandaloneResourceTrackerHook[T, ID]() extends Hook[ResourceProvider[T, ID]]() {
   type P = ResourceProvider[T, ID]
   
   val _providers = new ListBuffer[P]()
@@ -328,7 +328,7 @@ object BufferHookB {
   def apply[T]() = new BufferHookB
 }
 
-class BufferHookB[I, O](name: String, reduce: (List[I]) => O) extends Hook[ => I](name) {
+class BufferHookB[I, O](reduce: (List[I]) => O) extends Hook[ => I]() {
   def register(v: => I) = _register(v)
   def register(v: I) = _register(new Adapter(v).apply _)
   
@@ -338,7 +338,7 @@ class BufferHookB[I, O](name: String, reduce: (List[I]) => O) extends Hook[ => I
   def apply() = reduce(fragments)
 }
 
-class BufferHookC[T](name: String, reduce: (List[T]) => T) extends BufferHookB[T, T](name, reduce) {
+class BufferHookC[T](reduce: (List[T]) => T) extends BufferHookB[T, T](reduce) {
   
 }
 */

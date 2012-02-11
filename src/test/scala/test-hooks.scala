@@ -267,18 +267,18 @@ class HookSpec extends Spec {
 }
 
 object ComponentTestFeature extends Feature("Component Test") {
-	val hook = ComponentHook[String]("Test components")
+	val hook = ComponentHook[String]()
 	
 	def init() {
-		hook.register("foo")
-		hook.register("bar")
+		hook.hook("foo")
+		hook.hook("bar")
 	}
 }
 
 object ComponentTestFeature2 extends Feature("Component Test 2") {
-	val hook = ComponentHook.standalone[String]("Test components 2")
-  hook.register("foo")
-	hook.register("bar")
+	val hook = ComponentHook.standalone[String]()
+  hook.hook("foo")
+	hook.hook("bar")
 	
 	def init() {
 	}
@@ -287,73 +287,73 @@ object ComponentTestFeature2 extends Feature("Component Test 2") {
 //  foo, bar, qux, ged, mog, nib, kiv
 
 object FilterTestFeature extends Feature("Filter Test") {
-	val hook = FilterHook[String]("Test filters 1")
+	val hook = FilterHook[String]()
 	
 	def init() {
-		hook.register(transform _)
+		hook.hook(transform _)
 	}
 	
 	def transform(value: String) = value+"bar"
 }
 
 object FilterTestFeature2 extends Feature("Filter Test 2") {
-	val hook = FilterHook[String]("Test filters 2")
+	val hook = FilterHook[String]()
 	
 	def init() {
-		hook.register((value: String) => value+"bar")
-		hook.register(value => value+"qux")
+		hook.hook((value: String) => value+"bar")
+		hook.hook(value => value+"qux")
 	}
 }
 
 object FilterTestFeature3 extends Feature("Filter Test 3") {
-	val hook = FilterHook[String]("Test filters 3")
+	val hook = FilterHook[String]()
 	
 	def init() {
-		hook.register(value => value+"bar")
-		hook.register(value => value+"qux")
+		hook.hook(value => value+"bar")
+		hook.hook(value => value+"qux")
 	}
 }
 object FilterTestFeature4 extends Feature("Filter Test 4") {
-	val hook = FilterHook[String, List[String]]("Test filters 4")
+	val hook = FilterHook[String, List[String]]()
 	
 	def init() {
-		hook.register(transform _)
+		hook.hook(transform _)
 	}
 	
 	def transform(value: String, data: List[String]) = value+data(1)
 }
 
 object FilterTestFeature5 extends Feature("Filter Test 5") {
-	val hook = FilterHook[String, List[String]]("Test filters 5")
+	val hook = FilterHook[String, List[String]]()
 	
 	def init() {
-		hook.register((value, data) => value+data(1))
-		hook.register((value: String, data: List[String]) => value+data(2))
-		hook.register(value => value+"ged")
+		hook.hook((value, data) => value+data(1))
+		hook.hook((value: String, data: List[String]) => value+data(2))
+		hook.hook(value => value+"ged")
 	}
 }
 
 object FilterTestFeature6 extends Feature("Filter Test 6") {
-	val hook = FilterHook[String, List[String]]("Test filters 6")
+	val hook = FilterHook[String, List[String]]()
 	
 	def init() {
-		hook.register((value: String, data: List[String]) => value+data(1))
-		hook.register((value: String, data: List[String]) => value+data(2))
+		hook.hook((value: String, data: List[String]) => value+data(1))
+		hook.hook((value: String, data: List[String]) => value+data(2))
 	}
 }
 
 object FilterTestFeature7 extends Feature("Filter Test 7") {
-	val hook = FilterHook[String]("Test filters 7")
+	val hook = FilterHook[String]()
 	
 	def init() {}
 }
 
 
 object ActionTestFeature1 extends Feature("Action Test 1") {
-	val hook: ActionHook0 = ActionHook.simple("Test Action 1")
+	val hook: ActionHook0 = ActionHook.simple()
 	
 	def init() {
-		hook.register(testMethod)
+		hook.hook(testMethod)
 	}
 	
 	var message = "foo"
@@ -363,37 +363,37 @@ object ActionTestFeature1 extends Feature("Action Test 1") {
 }
 
 object ActionTestFeature2 extends Feature("Action Test 2") {
-	val hook = ActionHook.simple("Test Action 2")
+	val hook = ActionHook.simple()
 	var message = "foo"
 	
 	def init() {
-		hook.register { message = message+"bar" }
-		hook.register(message = message+"qux")
+		hook.hook { message = message+"bar" }
+		hook.hook(message = message+"qux")
 	}
 }
 
 object ActionTestFeature3 extends Feature("Action Test 3") {
-	val hook = ActionHook.simple("Test Action 2")
+	val hook = ActionHook.simple()
 	var message = "foo"
 	
 	def init() {
-		hook.register(message = "bar")
+		hook.hook(message = "bar")
 	}
 }
 
 object ActionTestFeature4 extends Feature("Action Test 4", before = List(ActionTestFeature3)) {
 	
 	def init() {
-		ActionTestFeature3.hook.register(ActionTestFeature3.message = "qux")
+		ActionTestFeature3.hook.hook(ActionTestFeature3.message = "qux")
 	}
 }
 
 
 object ActionTestFeature5 extends Feature("Action Test 5") {
-	val hook = ActionHook[String]("Test Action 1")
+	val hook = ActionHook[String]()
 	
 	def init() {
-		hook.register(testMethod _)
+		hook.hook(testMethod _)
 	}
 	
 	var message = "foo"
@@ -403,33 +403,33 @@ object ActionTestFeature5 extends Feature("Action Test 5") {
 }
 
 object ActionTestFeature6 extends Feature("Action Test 6") {
-	val hook = ActionHook[List[String]]("Test Action 2")
+	val hook = ActionHook[List[String]]()
 	var message = "foo"
 	
 	def init() {
-		hook.register((data) => message = message+data(1))
-		hook.register { data: List[String] => message = message+data(2) }
+		hook.hook((data) => message = message+data(1))
+		hook.hook { data: List[String] => message = message+data(2) }
 	}
 }
 
 object ActionTestFeature7 extends Feature("Action Test 7") {
-	val hook = ActionHook[List[String]]("Test Action 2")
+	val hook = ActionHook[List[String]]()
 	var message = "foo"
 	
 	def init() {
-		hook.register { data: List[String] => message = data(1) }
+		hook.hook { data: List[String] => message = data(1) }
 	}
 }
 
 object ActionTestFeature8 extends Feature("Action Test 8", before = List(ActionTestFeature7)) {
 	
 	def init() {
-		ActionTestFeature7.hook.register { data: List[String] => ActionTestFeature7.message = data(2) }
+		ActionTestFeature7.hook.hook { data: List[String] => ActionTestFeature7.message = data(2) }
 	}
 }
 
 object BufferTestFeature1 extends Feature("Buffer Test 1") {
-	val hook = BufferHook("Test buffers 1")
+	val hook = BufferHook()
 	
 	def init() {
 		hook.add("foo")
@@ -438,7 +438,7 @@ object BufferTestFeature1 extends Feature("Buffer Test 1") {
 }
 
 object BufferTestFeature2 extends Feature("Buffer Test 2", depend = List(BufferTestFeature2A, BufferTestFeature2B)) {
-	val hook = BufferHook("Test buffers 2")
+	val hook = BufferHook()
 	
 	def init() { }
 }
@@ -456,7 +456,7 @@ object BufferTestFeature2B extends FeatureLike("Buffer Test 2A", before = List(B
 }
 
 object BufferTestFeature3 extends Feature("Buffer Test 3") {
-	val hook = BufferHook("Test buffers 3", "(", ",", ")")
+	val hook = BufferHook("(", ",", ")")
 	
 	def init() {
 		hook.add("foo")
@@ -465,7 +465,7 @@ object BufferTestFeature3 extends Feature("Buffer Test 3") {
 }
 
 object BufferTestFeature4 extends Feature("Buffer Test 4") {
-	val hook = BufferHook("Test buffers 4")
+	val hook = BufferHook()
 	var message = "foo"
 	
 	def init() {
@@ -486,26 +486,26 @@ object BufferTestFeature5 extends Feature("Buffer Test 5") {
 }
 
 object BufferTestFeature6 extends Feature("Buffer Test 6") {
-	val hook = BufferHook("Test buffers 6")
+	val hook = BufferHook()
 	
 	def init() {
 		hook.add("foo")
-		hook.earlyFilters.register(fr => fr+"bar")
+		hook.earlyFilters.hook(fr => fr+"bar")
 	}
 }
 
 object BufferTestFeature7 extends Feature("Buffer Test 7") {
-	val hook = BufferHook("Test buffers 7")
+	val hook = BufferHook()
 	
 	def init() {
 		hook.add("foo")
-		hook.lateFilters.register(fr => fr+"bar")
+		hook.lateFilters.hook(fr => fr+"bar")
 	}
 }
 
 object BufferTestFeature8 extends Feature("Buffer Test 8") {
-	val hook = BufferHook("Test buffers 8")
-	val innerhook = BufferHook("Test buffers 8 (inner)")
+	val hook = BufferHook()
+	val innerhook = BufferHook()
 	
 	def init() {
 		hook.add("foo")
@@ -517,18 +517,18 @@ object BufferTestFeature8 extends Feature("Buffer Test 8") {
 }
 
 object GuardTestFeature1 extends Feature("Guard Test 1") {
-	val hook = GuardHook[String]("Test guards 1")
+	val hook = GuardHook[String]()
 	
 	def init() {
 	}
 }
 
 object GuardTestFeature2 extends Feature("Guard Test 2") {
-	val hook = GuardHook[String]("Test guards 2")
+	val hook = GuardHook[String]()
 	
 	def init() {
-		hook.register(m => m == "foo")
-		hook.register(m => m == "bar")
+		hook.hook(m => m == "foo")
+		hook.hook(m => m == "bar")
 	}
 }
 

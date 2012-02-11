@@ -215,29 +215,29 @@ object FeatureOmega extends Feature("ω", depend = List(FeatureK, FeatureSigma, 
 class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   //  Test Hooks
   
-  val actionHookKA = ActionHook[Unit]("か ka")
-  val actionHookKI = ActionHook[String]("き ki")
-  val actionHookKU = ActionHook[(Int, Int)]("く ku")
-  val actionHookKE = ActionHook[Unit]("け ke")
-  val actionHookKO = ActionHook[Unit]("こ ko")
+  val actionHookKA = ActionHook[Unit]()
+  val actionHookKI = ActionHook[String]()
+  val actionHookKU = ActionHook[(Int, Int)]()
+  val actionHookKE = ActionHook[Unit]()
+  val actionHookKO = ActionHook[Unit]()
   
-  val filterHookSA = FilterHook[String]("さ sa")
-  val filterHookSHI = FilterHook[Int]("し shi")
-  val filterHookSU = FilterHook[Int, String]("す su")
-  val filterHookSE = FilterHook[Int, String]("せ se")
-  val filterHookSO = FilterHook[String]("そ so")
+  val filterHookSA = FilterHook[String]()
+  val filterHookSHI = FilterHook[Int]()
+  val filterHookSU = FilterHook[Int, String]()
+  val filterHookSE = FilterHook[Int, String]()
+  val filterHookSO = FilterHook[String]()
   
-  val bufferHookTA = BufferHook("た ta")
-  val bufferHookCHI = BufferHook("ち chi")
-  val bufferHookTSU = BufferHook("つ tsu")
-  val bufferHookTE = BufferHook("て te")
-  val bufferHookTO = BufferHook("と to")
+  val bufferHookTA = BufferHook()
+  val bufferHookCHI = BufferHook()
+  val bufferHookTSU = BufferHook()
+  val bufferHookTE = BufferHook()
+  val bufferHookTO = BufferHook()
   
-  val guardHookNA = GuardHook[Int]("な na")
-  val guardHookNI = GuardHook[String]("に ni")
-  val guardHookNU = GuardHook[Feature]("ぬ nu")
-  val guardHookNE = GuardHook[String, String]("ね ne")
-  val guardHookNO = GuardHook[Int]("の no")
+  val guardHookNA = GuardHook[Int]()
+  val guardHookNI = GuardHook[String]()
+  val guardHookNU = GuardHook[Feature]()
+  val guardHookNE = GuardHook[String, String]()
+  val guardHookNO = GuardHook[Int]()
 
 
   //  Configuration
@@ -270,7 +270,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   
   //  Utility
   def report(features: List[FeatureLike], label: String) = {
-    features.length+" "+label+": "+features.sortBy(_.name).map(_.name).mkString(", ")
+    features.length+" "+label+": "+features.sortBy(_.).map(_.).mkString(", ")
   }
   
   
@@ -278,7 +278,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   feature("A large system") {
     scenario("register all features") {
       val repo = FeatureRepository()
-      repo.register(allFeatures: _*)
+      repo.hook(allFeatures: _*)
 
       info(report(repo.features, "features"))
       //for (f <- allFeatures)
@@ -298,17 +298,17 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
     
     scenario("install a guard") {
       val repo = FeatureRepository()
-      repo.register(allFeatures: _*)
+      repo.hook(allFeatures: _*)
       repo.require(reqFeatures: _*)
-      repo.securityGuard.register(guardFunction _)
+      repo.securityGuard.hook(guardFunction _)
       assert(repo.hasFeatures(permittedFeatures: _*))
     }
     
     scenario("create a context") {
       val repo = FeatureRepository()
-      repo.register(allFeatures: _*)
+      repo.hook(allFeatures: _*)
       repo.require(reqFeatures: _*)
-      repo.securityGuard.register(guardFunction _)
+      repo.securityGuard.hook(guardFunction _)
       val context = repo.makeContext(desiredFeatures, securityToken)
 
       info(report(permittedFeatures, "permitted features"))

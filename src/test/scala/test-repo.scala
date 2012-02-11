@@ -8,8 +8,8 @@ class RepoSpec extends Spec {
   describe("A dummy context") {
     it("should store hook") {
       HookContext.usingDummy {
-        val hook = FilterHook[String]("Dummy test")
-        hook.register(v => "bar")
+        val hook = FilterHook[String]()
+        hook.hook(v => "bar")
         val result = hook("foo")
         println("RepoSpec #14: "+result)
         assert(result == "bar")
@@ -28,29 +28,29 @@ class RepoSpec extends Spec {
 		describe("with a feature") {
 			it("should have that feature") {
 				val repo = FeatureRepository()
-				repo.register(TestFeature)
+				repo.hook(TestFeature)
 				assert(repo.hasFeature(TestFeature))
 			}
 
       describe("and a security guard") {
         it("should refuse a feature if it needs to") {
           val repo = FeatureRepository()
-          repo.register(TestFeature)
-          repo.securityGuard.register(feature => false)
+          repo.hook(TestFeature)
+          repo.securityGuard.hook(feature => false)
           val context = repo.makeContext(List(TestFeature))
           assert(!context.hasFeature(TestFeature))
         }
         it("should refuse required features") {
           val repo = FeatureRepository()
           repo.require(TestFeature)
-          repo.securityGuard.register(feature => false)
+          repo.securityGuard.hook(feature => false)
           val context = repo.makeContext(List(TestFeature))
           assert(!context.hasFeature(TestFeature))
         }
         it("should refuse dependencies") {
           val repo = FeatureRepository()
-          repo.register(TestFeature2)
-          repo.securityGuard.register( feature => feature match {
+          repo.hook(TestFeature2)
+          repo.securityGuard.hook( feature => feature match {
             case TestFeature2B => false
             case _ => true
           })
@@ -60,7 +60,7 @@ class RepoSpec extends Spec {
         it("should use a security token to decide") {
           val repo = FeatureRepository()
           repo.require(TestFeature2)
-          repo.securityGuard.register((feature, token) => {
+          repo.securityGuard.hook((feature, token) => {
             assert(token == Some("foo"))
             true
           })
@@ -72,14 +72,14 @@ class RepoSpec extends Spec {
 			describe("not required") {
 				it("should produce a context with no features") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature)
+					repo.hook(TestFeature)
 					val context = repo.makeContext(List())
 					assert(!context.hasFeature(TestFeature))
 				}
 				
 				it("should produce a context with the desired feature") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature)
+					repo.hook(TestFeature)
 					val context = repo.makeContext(List(TestFeature))
 					assert(context.hasFeature(TestFeature))
 				}
@@ -87,7 +87,7 @@ class RepoSpec extends Spec {
 				it("should produce a context with the desired feature only once") {
 					//println(" -- ONLY ONCE --")
 					val repo = FeatureRepository()
-					repo.register(TestFeature)
+					repo.hook(TestFeature)
 					val context = repo.makeContext(List(TestFeature))
 					val features = context.features.filter(p => p == TestFeature)
 					assert(features.length == 1)
@@ -97,14 +97,14 @@ class RepoSpec extends Spec {
 			describe("required") {
 				it("should require that feature") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature)
+					repo.hook(TestFeature)
 					repo.require(TestFeature)
 					assert(repo.isRequired(TestFeature))
 				}
 				
 				it ("should produce a context with the required feature") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature)
+					repo.hook(TestFeature)
 					repo.require(TestFeature)
 					val context = repo.makeContext(List())
 					assert(context.hasFeature(TestFeature))
@@ -113,7 +113,7 @@ class RepoSpec extends Spec {
 				it("should produce a context with the desired feature only once") {
 					//println(" -- ONLY ONCE --")
 					val repo = FeatureRepository()
-					repo.register(TestFeature)
+					repo.hook(TestFeature)
 					repo.require(TestFeature)
 					val context = repo.makeContext(List(TestFeature))
 					assert(context.features.length == 1)
@@ -125,7 +125,7 @@ class RepoSpec extends Spec {
 			it("should produce a context with both features") {
 				//Logging.logging = true
 				val repo = FeatureRepository()
-				repo.register(TestFeature2)
+				repo.hook(TestFeature2)
 				val context = repo.makeContext(List(TestFeature2))
 				assert(context.hasFeature(TestFeature2A))
 				assert(context.hasFeature(TestFeature2B))
@@ -134,7 +134,7 @@ class RepoSpec extends Spec {
 			describe("where A is before B") {
 				it("should produce a context with both features in order") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature3)
+					repo.hook(TestFeature3)
 					val context = repo.makeContext(List(TestFeature3))
 					assert(context.hasFeature(TestFeature3A))
 					assert(context.hasFeature(TestFeature3B))
@@ -145,7 +145,7 @@ class RepoSpec extends Spec {
 			describe("where B is before A") {
 				it("should produce a context with both features in order") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature4)
+					repo.hook(TestFeature4)
 					val context = repo.makeContext(List(TestFeature4))
 					assert(context.hasFeature(TestFeature4A))
 					assert(context.hasFeature(TestFeature4B))
@@ -156,7 +156,7 @@ class RepoSpec extends Spec {
 			describe("where the order is unsolvable") {
 				it("should throw a dependency exception") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature5)
+					repo.hook(TestFeature5)
           intercept[FeatureDependencyException] { repo.makeContext(List(TestFeature5)) }
 				}
 			}
@@ -164,7 +164,7 @@ class RepoSpec extends Spec {
 			describe("with outside dependencies") {
 				it("should exclude them") {
 					val repo = FeatureRepository()
-					repo.register(TestFeature6)
+					repo.hook(TestFeature6)
 					val context = repo.makeContext(List(TestFeature6))
 					assert(!context.hasFeature(TestFeature5A))
 				}
@@ -174,13 +174,13 @@ class RepoSpec extends Spec {
 		describe("with a circular dependency between three features") {
 			it("should contain all three features") {
 				val repo = FeatureRepository()
-				repo.register(TestFeature7)
+				repo.hook(TestFeature7)
 				val context = repo.makeContext(List(TestFeature7))
 				assert(context.hasFeature(TestFeature7) && context.hasFeature(TestFeature7A) && context.hasFeature(TestFeature7B))
 			}
 			it("should contain exactly three features") {
 				val repo = FeatureRepository()
-				repo.register(TestFeature7)
+				repo.hook(TestFeature7)
 				val context = repo.makeContext(List(TestFeature7))
 				assert(context.features.length == 3)
 			}

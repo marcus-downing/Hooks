@@ -73,7 +73,7 @@ Load plugins from a directory:
 ```scala
 val folder = new File("homedir/plugins")
 val classpath = List(new File("myapplication.jar"))
-new PluginLoader(folder, classpath, ".jar").registerAll()
+new PluginLoader(folder, classpath, ".jar").hookAll()
 ```
 
 

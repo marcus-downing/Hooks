@@ -10,7 +10,7 @@ import org.clapper.classutil._
 class LoadSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   //  Utility
   def report(features: List[FeatureLike], label: String) = {
-    features.length+" "+label+": "+features.sortBy(_.name).map(_.name).mkString(", ")
+    features.length+" "+label+": "+features.sortBy(_.).map(_.).mkString(", ")
   }
 
   feature("A codebase") {
@@ -21,11 +21,11 @@ class LoadSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
       info(classesFolder.getAbsolutePath)
       val finder = ClassFinder(List(classesFolder, testClassesFolder))
       
-      //info("Classes: "+finder.getClasses.toList.map(_.name).mkString(", "))
-      //info("Classes: "+finder.getClasses.toList.map(_.name).filter(_.contains("Example")).mkString(", "))
-      //info("Features: "+finder.getClasses.toList.filter(_.implements("hooks.Features")).map(_.name).mkString(", "))
+      //info("Classes: "+finder.getClasses.toList.map(_.).mkString(", "))
+      //info("Classes: "+finder.getClasses.toList.map(_.).filter(_.contains("Example")).mkString(", "))
+      //info("Features: "+finder.getClasses.toList.filter(_.implements("hooks.Features")).map(_.).mkString(", "))
       
-      //info("Feature class: "+finder.getClasses.toList.filter(_.name.contains("hooks.Feature")).map(_.name).mkString(", "))
+      //info("Feature class: "+finder.getClasses.toList.filter(_..contains("hooks.Feature")).map(_.).mkString(", "))
       
       /*
       val classes = finder.getClasses
