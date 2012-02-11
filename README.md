@@ -1,129 +1,96 @@
-**Hooks** is a simple Scala library for handling plugins and modular functionality.
+**Hooks** provides a way for Scala programs to support plugins and optional features.
 
-* Create type-safe 'hooks' representing ways your code can be extended
-* Add behaviours to those hooks, from plugins or elsewhere
-* Apply those hooks to invoke plugin code
+## Extend your code
 
-Hooks has the following advantages:
+Annotate your code with special hooks:
 
-* Fits into any framework or platform
-* Straightforward and extensible API
-* Scala's type safety ensures plugins behave themselves
-* No configuration files or database
-* No classloaders, code injection or other tricks
+```scala
+val nameFilter = FilterHook[String]()
+val userSavedAction = ActionHook[User]()
+```
 
-## Quick start
-You can run the following commands in the Scala REPL.
+Call into that hook in your program code:
 
-1. Import the library:
+```scala
+val displayName = nameFilter(user.name)
+```
 
-    ```scala
-    import hooks._
-    ```
+Plugins can attach behaviours to that hook to modify it:
 
-2. Create a hook:
+```scala
+nameFilter.hook { name => name.toUpperCase }
+```
 
-    ```scala
-    val nameFilter = FilterHook[String]("Name filter hook")
-    ```
 
-3. Create a feature that attaches a callback to that hook:
+## Optional features
 
-    ```scala
-    object MyFeature extends Feature("My Feature") {
-      def init () {
-        nameFilter.register { name =>
-          val words = name.split(" ").toList
-          val words2 = (words.last+",") :: words.init
-          words2.mkString(" ")
-        }
-      }
-    }
-    ```
+Features group these modifications:
 
-4. Register your feature with the repository:
+```scala
+object Uppercase extends Feature("Uppercase") {
+  def init() {
+    nameFilter.hook { name => name.toUpperCase }
+  }
+}
+```
 
-    ```scala
-    FeatureRepository.register(MyFeature)
-    ```
+Select which features you want to use when running code:
 
-5. Choose your desired features:
+```scala
+val features = List(Uppercase, AnotherFeature)
+val displayName = FeatureRepository.using(features) {
+  nameFilter(user.name)
+}
+```
 
-    ```scala
-    val optionalFeatures = FeatureRepository.optionalFeatures
-    // ...choose some features...
-    val chosenFeatures = List(MyFeature)
-    FeatureRepository.usingFeatures(chosenFeatures) {
-      // ...do something...
-    }
-    ```
+Features can depend on each other and they'll be kept together:
 
-6. In the appropriate place in client code, trigger that hook:
+```scala
+object Uppercase extends Feature("Uppercase",
+                                 depend = List(AnotherFeature)) {
+```
 
-    ```scala
-    FeatureRepository.usingFeatures(chosenFeatures) {
-      val name = "John Smith"
-      val displayName = nameFilter(name)
-      println displayName
-    }
-    ```
-    
-    This prints the string: ```Smith, John```.
+You can control the order you want features to be initialised:
 
-## Introduction
+```scala
+object Uppercase extends Feature("Uppercase",
+                                 depend = List(AnotherFeature)
+                                 before = List(AnotherFeature)) {
+```
 
-As a program grows larger, it often faces a problem: one size no longer fits all.
-Each client may want:
 
-* to only enable the parts of a program that are relevant to them
-* to add features nobody else would want
-* to use their own branding or change the way some areas work
+## Plugins
 
-It's tempting to fork the codebase into separate versions,
-but this will made it harder to maintain in the future.
-A better solution is to make the code modular.
+Load plugins from a directory:
 
-The aim of **Hooks** is to handle, in as safe a manner as possible,
-the uncertainty of optional and modular features.
-It's inspired by the success of pluggable architectures like jQuery and WordPress,
-but adds a good dose of Scala's immutability and type safety.
+```scala
+val folder = new File("homedir/plugins")
+val classpath = List(new File("myapplication.jar"))
+new PluginLoader(folder, classpath, ".jar").registerAll()
+```
 
-A `Hook` is a point at which your program can be extended.
-It connects code together, allowing some feature, resource or data
-to be produced in one area of your code and consumed in another.
-There are hooks for:
-
-- Handling events ([`ActionHook`](https://github.com/marcusatbang/Hooks/wiki/ActionHook))
-
-- Transforming and replacing values ([`FilterHook`](https://github.com/marcusatbang/Hooks/wiki/FilterHook))
-
-- Permitting only certain values ([`GuardHook`](https://github.com/marcusatbang/Hooks/wiki/GuardHook))
-
-- Collecting components ([`ComponentHook`](https://github.com/marcusatbang/Hooks/wiki/ComponentHook))
-
-- Selecting one component from a list ([`SelectableHook`](https://github.com/marcusatbang/Hooks/wiki/SelectableHook))
-
-- Tracking open resources ([`ResourceTrackerHook`](https://github.com/marcusatbang/Hooks/wiki/ResourceTrackerHook))
-
-- Building complex expressions ([`BufferHook`](https://github.com/marcusatbang/Hooks/wiki/BufferHook))
-
-...and more. You can also build your own hook classes.
-
-Each type of hook is typed to control the components registered with it and ensure their semantics.
-This lets you open up your program to plugins without worrying that each one could break it.
-
-**Hooks** provides tools to control the life cycle of plugins and features,
-but does not impose a specific structure on your code.
-It's simply a library that can be added to whatever framework your application uses.
 
 ## Read more
-- **Start here: [Overview](https://github.com/marcusatbang/Hooks/wiki/Overview) &rarr;**
+- **Start here: [Quick Start](https://github.com/marcusatbang/Hooks/wiki/Quick%20Start) &rarr;**
+
+- [Introduction](https://github.com/marcusatbang/Hooks/wiki/Introduction)
 
 - [Getting Started](https://github.com/marcusatbang/Hooks/wiki/Getting Started)
 
-- [Advanced User Guide](https://github.com/marcusatbang/Hooks/wiki/Advanced User Guide)
+    - [`ActionHook`](https://github.com/marcusatbang/Hooks/wiki/ActionHook)
+    - [`FilterHook`](https://github.com/marcusatbang/Hooks/wiki/FilterHook)
+    - [`GuardHook`](https://github.com/marcusatbang/Hooks/wiki/GuardHook)
+    - [`ComponentHook`](https://github.com/marcusatbang/Hooks/wiki/ComponentHook)
+    - [`SelectableHook`](https://github.com/marcusatbang/Hooks/wiki/SelectableHook)
+    - [`BufferHook`](https://github.com/marcusatbang/Hooks/wiki/BufferHook)
+    - [`ResourceTrackerHook`](https://github.com/marcusatbang/Hooks/wiki/ResourceTrackerHook)
+
+- [Advanced Topics](https://github.com/marcusatbang/Hooks/wiki/Advanced Topics)
 
 - [Security](https://github.com/marcusatbang/Hooks/wiki/Security)
 
 - [Examples](https://github.com/marcusatbang/Hooks/wiki/Examples)
-Convert 
+
+    - [Basic application](https://github.com/marcusatbang/Hooks/wiki/Basic%20application)
+    - [Website using the Play! framework](https://github.com/marcusatbang/Hooks/wiki/Play!%20framework) (not yet implemented)
+    - [Loading plugins from a directory](https://github.com/marcusatbang/Hooks/wiki/Feature%20loader)
