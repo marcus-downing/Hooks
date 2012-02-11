@@ -13,12 +13,14 @@ Call into that hook in your program code:
 
 ```scala
 val displayName = nameFilter(user.name)
+userSavedAction(user)
 ```
 
 Plugins can attach behaviours to that hook to modify it:
 
 ```scala
 nameFilter.hook { name => name.toUpperCase }
+userSavedAction.hook { user => sendNotificationEmail(user) }
 ```
 
 
