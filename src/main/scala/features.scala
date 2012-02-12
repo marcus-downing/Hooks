@@ -11,7 +11,7 @@ package hooks
  */
 
 abstract class FeatureLike(
-  val ,
+  val name: String,
 	depend: => List[FeatureLike] = List.empty,
 	before: => List[FeatureLike] = List.empty,
 	after: => List[FeatureLike] = List.empty,
@@ -19,7 +19,7 @@ abstract class FeatureLike(
   delegateSecurity: => FeatureLike = null
 ){
 	def init()
-  override def toString = 
+  override def toString = name
   def isActive = HookContext.get.hasFeature(this)
   def _depend = (require ::: depend).filterNot( _ == null )
   def _before = before.filterNot( _ == null )
@@ -29,25 +29,25 @@ abstract class FeatureLike(
 }
 
 abstract class Feature(
-  ,
+  name: String,
 	depend: => List[FeatureLike] = List.empty,
 	before: => List[FeatureLike] = List.empty,
 	after: => List[FeatureLike] = List.empty,
   require: => List[FeatureLike] = List.empty,
   delegateSecurity: => FeatureLike = null
-) extends FeatureLike (depend = depend, before = before, after = after, require = require, delegateSecurity = delegateSecurity)
+) extends FeatureLike (name, depend = depend, before = before, after = after, require = require, delegateSecurity = delegateSecurity)
 
 class FeatureDependencyException(edges: List[(FeatureLike, FeatureLike)]) extends Exception(FeatureDependencyException.message(edges))
 
 object FeatureDependencyException {
 	def message(edges: List[(FeatureLike, FeatureLike)]) = {
-		val errors = edges.map(e => e._1.+" and "+e._2.)
+		val errors = edges.map(e => e._1.name+" and "+e._2.name)
 		"Unsatisfiable dependencies between "+errors.mkString(", ")
 	}
 }
 
 abstract class Plugin(
-  val ,
+  val name: String,
   requiredFeatures: => List[Feature] = List.empty,
   optionalFeatures: => List[Feature] = List.empty
 ) {

@@ -10,7 +10,7 @@ import org.clapper.classutil._
 class LoadSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   //  Utility
   def report(features: List[FeatureLike], label: String) = {
-    features.length+" "+label+": "+features.sortBy(_.).map(_.).mkString(", ")
+    features.length+" "+label+": "+features.sortBy(_.name).map(_.name).mkString(", ")
   }
 
   feature("A codebase") {

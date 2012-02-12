@@ -30,8 +30,8 @@ class FilterHook0[V]() extends FilterHook[V, Nil.type]() {
 }
 
 class StandaloneFilterHook[V, S](base: FilterHook[V, S]) extends StandaloneHook(base) {
-  def hook(f: (V, S) => V) = standalone { base.register(f) }
-  def hook(f: (V) => V) = standalone { base.register(f) }
+  def hook(f: (V, S) => V) = standalone { base.hook(f) }
+  def hook(f: (V) => V) = standalone { base.hook(f) }
   def filters = standalone { base.filters }
   def apply(value: V, extra: S): V = standalone { base(value, extra) }
 }

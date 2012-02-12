@@ -270,7 +270,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   
   //  Utility
   def report(features: List[FeatureLike], label: String) = {
-    features.length+" "+label+": "+features.sortBy(_.).map(_.).mkString(", ")
+    features.length+" "+label+": "+features.sortBy(_.name).map(_.name).mkString(", ")
   }
   
   
@@ -278,7 +278,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
   feature("A large system") {
     scenario("register all features") {
       val repo = FeatureRepository()
-      repo.hook(allFeatures: _*)
+      repo.register(allFeatures: _*)
 
       info(report(repo.features, "features"))
       //for (f <- allFeatures)
@@ -298,7 +298,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
     
     scenario("install a guard") {
       val repo = FeatureRepository()
-      repo.hook(allFeatures: _*)
+      repo.register(allFeatures: _*)
       repo.require(reqFeatures: _*)
       repo.securityGuard.hook(guardFunction _)
       assert(repo.hasFeatures(permittedFeatures: _*))
@@ -306,7 +306,7 @@ class LargeSpec extends FeatureSpec with GivenWhenThen with MustMatchers {
     
     scenario("create a context") {
       val repo = FeatureRepository()
-      repo.hook(allFeatures: _*)
+      repo.register(allFeatures: _*)
       repo.require(reqFeatures: _*)
       repo.securityGuard.hook(guardFunction _)
       val context = repo.makeContext(desiredFeatures, securityToken)

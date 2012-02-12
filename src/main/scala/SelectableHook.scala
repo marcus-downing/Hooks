@@ -22,7 +22,7 @@ class SelectableHook[M, T, S](selector: (List[(M, T)], S) => Option[T]) extends 
 }
 
 class SelectableHook0[M, T](selector: (List[(M, T)]) => Option[T]) extends SelectableHook[M, T, Nil.type](new SelectableHook0Adaptor[M, T](selector).apply _) {
-  override val guard = GuardHook[(M, T)](+" (guard)")
+  override val guard = GuardHook[(M, T)]()
   def apply(): Option[T] = apply(Nil)
 }
 

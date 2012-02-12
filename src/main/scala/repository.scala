@@ -83,7 +83,7 @@ class FeatureRepositoryImpl extends FeatureRepository {
   //def hasFeature(feature: Feature) = registeredFeatures.contains(feature)
   //def isRequired(feature: Feature) = requiredFeatures.contains(feature)
   
-  val securityGuard = GuardHook.standalone[FeatureLike, Option[Any]]("Repository guard")
+  val securityGuard = GuardHook.standalone[FeatureLike, Option[Any]]()
   
   //  find all feature dependencies
   def traceFeatures(head: List[FeatureLike], token: Option[Any]) = {

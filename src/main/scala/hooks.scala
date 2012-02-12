@@ -34,7 +34,7 @@ abstract class Hook[S]() {
   *
   * @define standalone This is a standalone version of the hook that does not depend on a context.
   */
-abstract class StandaloneHook[S](val base: Hook[S]) extends Hook[S](base.) {
+abstract class StandaloneHook[S](val base: Hook[S]) extends Hook[S]() {
   val standaloneContext = HookContext.createDummy()
   /** Perform some task using a dummy global context */
   protected def standalone[R](f: => R): R = base.synchronized { standaloneContext.using { f } }
@@ -65,8 +65,8 @@ object BufferHook {
 }
 
 class BufferHook[T](prefix: String, infix: String, affix: String, fix: (T) => String) extends Hook[Function0[String]]() {
-  val earlyFilters = FilterHook[T](+" (early filter)")
-  val lateFilters = FilterHook[String](+" (late filter)")
+  val earlyFilters = FilterHook[T]()
+  val lateFilters = FilterHook[String]()
 
   def add(f: => T): Unit = _register(new Adaptor2(f).render _)
   def add(nested: BufferHook[_]): Unit = _register(new NestAdaptor(nested).render _)
