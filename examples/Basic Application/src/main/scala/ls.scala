@@ -24,8 +24,8 @@ object LS {
   }
   
   // hooks
-  val fileGuard = GuardHook[File]("File guard")
-  val filenameFilter = FilterHook[String, File]("Filenames")
+  val fileGuard = GuardHook[File]()
+  val filenameFilter = FilterHook[String, File]()
   
   //  application
   def registerFeatures () {
@@ -132,7 +132,7 @@ object LS {
 object DefaultFeatures extends Feature("Default Features") {
   def init() {
     if (!AllFiles.isActive)
-      LS.fileGuard.register(f => !f.getName().startsWith("."))
+      LS.fileGuard.hook { f => !f.getName().startsWith(".") }
   }
 }
 
@@ -155,7 +155,7 @@ object ColourOutput extends Feature("Colour output") {
   def init() {
     val terminal = Terminal.getTerminal()
     if (terminal.isANSISupported()) {
-      LS.filenameFilter.register { (name, file) =>
+      LS.filenameFilter.hook { (name, file) =>
         import ANSIBuffer.ANSICodes._
         if (Verbose.isActive) println("Colours for "+name)
         if (FileUtils.isSymlink(file))
