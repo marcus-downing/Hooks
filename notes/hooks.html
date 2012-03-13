@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='UTF-8'/>
+<title>Hooks - Plugins for Scala</title>
+<style>
+  body {
+    background: #fcfcfc;
+    padding-top: 10px;
+    padding-bottom: 100px;
+    font-family: Georgia, serif;
+    font-size: 16px;
+    color: #111;
+  }
+  
+  .fixed-width {
+    margin-left: auto;
+    margin-right: auto;
+    width: 800px;
+    position: relative;
+  }
+  
+  #tagline {
+    position: absolute;
+    right: 0px;
+    width: 220px;
+    bottom: 28px;
+  }
+  
+  h1 { font-size: 130px; font-weight: normal; margin-top: 40px; margin-bottom: 60px; margin-left: -9px; }
+  h3 { font-size: 24px; font-weight: normal; margin-bottom: 16px; margin-top: 36px; }
+  
+  a.button {
+    display: block;
+    position: relative;
+    width: 220px;
+    padding: 5px;
+    text-align: center;
+    background: #29d;
+    color: white;
+    font-family: sans-serif;
+    font-weight: bold;
+    text-decoration: none;
+    border-radius: 4px;
+    text-shadow: #06a 0px 2px 1px;
+    border-top: 1px solid #6cf;
+    border-bottom: 1px solid #06a;
+  }
+  
+  a.button span {
+    position: absolute;
+    display: block;
+    top: 0px;
+    left: 0px;
+    right: 0px;
+    height: 16px;
+    overflow: hidden;
+    background: rgba(255,255,255,0.15);
+    border-radius: 5px;
+  }
+  
+  a.button:hover {
+    background: #08d;
+  }
+  
+  .warning {
+    color: #500;
+    padding: 1px 12px 1px 94px;
+    border-radius: 3px;
+    background: #fdd url(warning.png) 13px 15px no-repeat;
+    margin-left: -6px;
+    margin-right: -6px;
+    margin-top: 36px;
+  }
+  
+  .warning h3 { margin-top: 10px; }
+  
+  .version { color: #700; }
+  
+  pre {
+    border: 1px solid #ddd;
+    border-radius: 3px;
+    margin-left: -2px;
+    margin-right: -2px;
+    padding: 5px 8px;
+    background: #f8f8f8;
+  }
+  
+  pre.left { float: left; width: 370px; }
+  pre.right { float: right; width: 370px; }
+  
+  pre .var { color: #087; }
+  pre .type { color: #a60; }
+  pre .member { color: #a06; }
+  pre .value { color: #a90; }
+  pre .keyword { color: #049; font-weight: bold; }
+  
+  .smallprint {
+    font-size: 13px;
+    color: #444;
+  }
+  .clear { clear: both; height: 0px; overflow: hidden; }
+  </style>
+</head>
+
+<body>
+
+<div class='fixed-width'>
+  <h1>Hooks.</h1>
+  <div id='tagline'>
+    <h3>Plugins for Scala</h3>
+    <p>Current version: <span class='version'>0.1</span></p>
+    <a class='button' href='https://github.com/marcusatbang/hooks'>github project<span></span></a>
+  </div>
+</div>
+
+
+<div class='fixed-width'>
+<p>Hooks provides a way for Scala programs to support plugins and optional features.</p>
+
+<div class='warning'>
+<h3>Under development</h3>
+<p>The Hooks library is still being developmed. Details will change before it's ready for release.</p>
+</div>
+
+<h3>Extend your code</h3>
+<p>Annotate your code with special hooks:</p>
+<pre class='left'><span class='keyword'>val</span> <span class='var'>nameFilter</span> = <span class='type'>FilterHook</span>[<span class='type'>String</span>]()</pre>
+<pre class='right'><span class='keyword'>val</span> <span class='var'>savedAction</span> = <span class='type'>ActionHook</span>[<span class='type'>User</span>]()</pre>
+<div class='clear'></div>
+
+<p>Call into that hook in your program code:</p>
+<pre class='left'><span class='keyword'>val</span> <span class='var'>name</span> = <span class='var'>nameFilter</span>(<span class='var'>user</span>.<span class='var'>name</span>)</pre>
+<pre class='right'><span class='var'>savedAction</span>(<span class='var'>user</span>)</pre>
+<div class='clear'></div>
+
+<p>Plugins can attach behaviours to that hook to modify it:</p>
+<pre class='left'><span class='var'>nameFilter</span>.<span class='member'>hook</span> {
+  <span class='var'>name</span> => <span class='var'>name</span>.<span class='member'>toUpperCase</span>
+}</pre>
+<pre class='right'><span class='var'>savedAction</span>.<span class='member'>hook</span> {
+  <span class='var'>user</span> => <span class='member'>sendNotificationEmail</span>(<span class='var'>user</span>)
+}</pre>
+<div class='clear'></div>
+
+<h3>Optional features</h3>
+<p>Features group these modifications:</p>
+<pre><span class='keyword'>object</span> <span class='type'>Uppercase</span> <span class='keyword'>extends</span> <span class='type'>Feature</span>(<span class='value'>"Uppercase"</span>) {
+  <span class='keyword'>def</span> <span class='member'>init</span>() {
+    <span class='var'>nameFilter</span>.<span class='member'>hook</span> { <span class='var'>name</span> => <span class='var'>name</span>.<span class='member'>toUpperCase</span> }
+  }
+}</pre>
+
+<p>Select which features you want to use when running code:</p>
+<pre><span class='keyword'>val</span> <span class='var'>features</span> = <span class='type'>List</span>(<span class='type'>Uppercase</span>, <span class='type'>AnotherFeature</span>)
+<span class='keyword'>val</span> <span class='var'>displayName</span> = <span class='type'>FeatureRepository</span>.<span class='member'>using</span>(<span class='var'>features</span>) {
+  <span class='var'>nameFilter</span>(<span class='var'>user</span>.<span class='var'>name</span>)
+}</pre>
+
+<p>Features can depend on each other and they'll be kept together:</p>
+<pre>
+<span class='keyword'>object</span> <span class='type'>Uppercase</span> <span class='keyword'>extends</span> <span class='type'>Feature</span>(<span class='value'>"Uppercase"</span>,
+                                 <span class='var'>depend</span> = <span class='type'>List</span>(<span class='type'>AnotherFeature</span>)) {</pre>
+
+<p>You can control the order you want features to be initialised:</p>
+<pre>
+<span class='keyword'>object</span> <span class='type'>Uppercase</span> <span class='keyword'>extends</span> <span class='type'>Feature</span>(<span class='value'>"Uppercase"</span>,
+                                 <span class='var'>depend</span> = <span class='type'>List</span>(<span class='type'>AnotherFeature</span>)
+                                 <span class='var'>before</span> = <span class='type'>List</span>(<span class='type'>AnotherFeature</span>)) {</pre>
+
+<h3>Plugins</h3>
+<p>Load plugins from a directory:</p>
+<pre><span class='keyword'>val</span> <span class='var'>folder</span> = <span class='keyword'>new</span> <span class='type'>File</span>(<span class='value'>"homedir/plugins"</span>)
+<span class='keyword'>val</span> <span class='var'>classpath</span> = <span class='type'>List</span>(<span class='keyword'>new</span> <span class='type'>File</span>(<span class='value'>"myapplication.jar"</span>))
+<span class='keyword'>new</span> <span class='type'>PluginLoader</span>(<span class='var'>folder</span>, <span class='var'>classpath</span>, <span class='value'>".jar"</span>).<span class='member'>registerAll</span>()</pre>
+
+<h3>Learn more</h3>
+<p>More details on the project's github page:</p>
+    <a class='button' href='https://github.com/marcusatbang/hooks'>github project<span></span></a>
+<p class='smallprint'>Copyright &copy; Marcus Downing 2012</p>
+</div>
+
+</body>
+</html>

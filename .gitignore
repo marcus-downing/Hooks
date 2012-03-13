@@ -1,5 +1,5 @@
 *.iml
 .idea
-project
 target
+boot
 .history
