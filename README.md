@@ -5,6 +5,8 @@
 **Under development**
 The Hooks library is still being developed. Details will change before it's ready for release.
 
+
+
 ## Extend your code
 
 Annotate your code with special hooks:
@@ -75,6 +77,16 @@ val folder = new File("homedir/plugins")
 val classpath = List(new File("myapplication.jar"))
 new PluginLoader(folder, classpath, ".jar").hookAll()
 ```
+
+
+## Using Hooks with SBT
+
+You can add the hooks library to your SBT project by putting this into your build file:
+
+```scala
+libraryDependencies += "cc.minotaur" %% "hooks" % "0.1"
+```
+
 
 
 ## Read more
