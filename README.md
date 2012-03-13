@@ -81,11 +81,13 @@ new PluginLoader(folder, classpath, ".jar").hookAll()
 
 ## Using Hooks with SBT
 
-You can add the hooks library to your SBT project by putting this into your build file:
+You can add the Hooks library to your SBT project by putting this into your build file:
 
 ```scala
 libraryDependencies += "cc.minotaur" %% "hooks" % "0.1"
 ```
+
+Note that at present Hooks is compatible with Scala versions 2.9.0 and 2.9.1.
 
 
 
